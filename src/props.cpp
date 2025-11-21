@@ -1,8 +1,6 @@
 #include "azh/props.h"
 #include "azh/logger.h"
 
-#include <filesystem>
-
 props::props()
 {
     attribute_table_config debug(0);
@@ -11,9 +9,9 @@ props::props()
     create(debug, release);
 }
 
-props::props(const std::string &xml_path)
+props::props(const std::string &xml_path): m_xml_path(xml_path)
 {
-    pugi::xml_parse_result result = m_doc.load_file(xml_path.c_str());
+    pugi::xml_parse_result result = m_doc.load_file(m_xml_path.c_str());
 
     if (!result)
     {
@@ -27,7 +25,25 @@ props::props(const std::string &xml_path)
     }
 }
 
+void props::save()
+{
+    if(m_xml_path.empty())
+    {
+        azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Save - empty xml path, not set default save path.";
+        return;
+    }
+
+    if(!std::filesystem::exists(std::filesystem::path(m_xml_path).parent_path()))
+    {
+        azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Save - invalid save path : "<<m_xml_path;
+        return;
+    }
+
+    save(m_xml_path);
+}
+
 void props::save(const std::string &xml_path)
+
 {
     if (m_doc.save_file(xml_path.c_str()))
     {
@@ -35,6 +51,7 @@ void props::save(const std::string &xml_path)
 
         azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Content:";
         m_doc.save(std::cout);
+        this->m_xml_path=xml_path;
     }
     else
     {
@@ -62,7 +79,7 @@ bool props::check()
         }
     }
 
-    azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Check - can not find 'ItemDefinitionGroup'.";
+    azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Check - can not find ClCompile/Link in 'ItemDefinitionGroup'.";
 
     return false;
 }
@@ -232,6 +249,36 @@ std::string props::get_attr_by_name(const std::string &name, const props_attr_pr
     return "";
 }
 
+std::string props::get_attr_by_name(const std::string &name, const std::string& condition, bool isClCompile)
+{
+    if (!check())
+    {
+        return "";
+    }
+
+    std::string node_name = isClCompile?"ClCompile":"Link";
+
+    pugi::xml_node project = m_doc.child("Project");
+
+    for (pugi::xml_node group : project.children("ItemDefinitionGroup"))
+    {
+        if (group.attribute("Condition").value() == "'$(Configuration)|$(Platform)'=='" + condition + "'")
+        {
+            pugi::xml_node node = group.child(node_name);
+            pugi::xml_node subnode = node.child(name);
+
+            if (subnode)
+            {
+                return subnode.text().get();
+            }
+
+            break;
+        }
+    }
+
+    return "";
+}
+
 bool props::set_attr_by_name(const std::string &name, const std::string &value, const props_attr_preset &preset)
 {
     if (!check())
@@ -242,6 +289,37 @@ bool props::set_attr_by_name(const std::string &name, const std::string &value, 
     std::pair<std::string, std::string> conf = get_attr_conf_by_preset(preset);
     std::string condition = conf.first;
     std::string node_name = conf.second;
+
+    pugi::xml_node project = m_doc.child("Project");
+
+    for (pugi::xml_node group : project.children("ItemDefinitionGroup"))
+    {
+        if (group.attribute("Condition").value() == "'$(Configuration)|$(Platform)'=='" + condition + "'")
+        {
+            pugi::xml_node node = group.child(node_name);
+            pugi::xml_node subnode = node.child(name);
+
+            if (!subnode)
+            {
+                subnode = node.append_child(name);
+            }
+
+            subnode.text().set(value.c_str());
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool props::set_attr_by_name(const std::string &name, const std::string &value, const std::string& condition, bool isClCompile)
+{
+    if (!check())
+    {
+        return false;
+    }
+
+    std::string node_name = isClCompile?"ClCompile":"Link";
 
     pugi::xml_node project = m_doc.child("Project");
 
@@ -329,6 +407,35 @@ bool props::remove_attr(const std::string &name, const props_attr_preset &preset
     return false;
 }
 
+std::vector<std::string> props::get_conditions()
+{
+    if (!check())
+    {
+        return std::vector<std::string>();
+    }
+
+    std::vector<std::string> conditions;
+
+    pugi::xml_node project = m_doc.child("Project");
+
+    for (pugi::xml_node group : project.children("ItemDefinitionGroup"))
+    {
+        std::string str=group.attribute("Condition").value();
+        size_t end=str.rfind('\'');
+        size_t begin=str.rfind('\'',end-1);
+        
+        if(end==std::string::npos||begin==std::string::npos)
+        {
+            continue;
+        }
+
+        std::string condition(str.begin()+begin+1,str.begin()+end);
+        conditions.push_back(condition);
+    }
+
+    return conditions;
+}
+
 void props::create(const attribute_table_config &debug_conf, const attribute_table_config &release_conf)
 {
     create_root();
@@ -388,12 +495,14 @@ bool props::create_item_group(const attribute_table_config &conf)
 
 void props::print_content()
 {
+    azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "==============================================================";
     azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Print xml content :";
     pugi::xml_node project = m_doc.child("Project");
 
     // 解析所有 ItemDefinitionGroup
     for (pugi::xml_node group : project.children("ItemDefinitionGroup"))
     {
+        azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "--------------------------------------------------------------";
         std::string condition = group.attribute("Condition").value();
         azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Codition : " << condition;
 
@@ -418,4 +527,6 @@ void props::print_content()
             azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "  - AdditionalDependencies: " << link.child("AdditionalDependencies").text().get();
         }
     }
+
+    azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "--------------------------------------------------------------";
 }

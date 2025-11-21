@@ -6,7 +6,9 @@
 enum class configuration_type
 {
     Debug = 0,
-    Release
+    Release,
+    MinSizeRel,
+    RelWithDebInfo
 };
 
 enum class platform_type

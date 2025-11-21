@@ -83,4 +83,4 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ExternalLib-Config.cmake DESTINATION l
 add_executable(VSATEditor main.cpp)
 target_link_libraries(VSATEditor PRIVATE ExternalLib)
 
-# add_subdirectory(ui)
+add_subdirectory(ui)

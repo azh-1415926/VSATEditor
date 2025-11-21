@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>VS 属性表编辑器 - VSATEditor</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_5">
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="props_editors">
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="file_menu">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <widget class="QMenu" name="import_menu">
+     <property name="title">
+      <string>导入</string>
+     </property>
+     <widget class="QMenu" name="global_props_menu">
+      <property name="title">
+       <string>全局属性表</string>
+      </property>
+      <addaction name="win64_props_action"/>
+      <addaction name="win32_props_action"/>
+     </widget>
+     <addaction name="global_props_menu"/>
+     <addaction name="project_props_action"/>
+    </widget>
+    <addaction name="import_menu"/>
+    <addaction name="new_props_action"/>
+    <addaction name="save_props_action"/>
+    <addaction name="close_props_action"/>
+   </widget>
+   <widget class="QMenu" name="other_menu">
+    <property name="title">
+     <string>其他</string>
+    </property>
+    <addaction name="about_action"/>
+   </widget>
+   <addaction name="file_menu"/>
+   <addaction name="other_menu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="action_2">
+   <property name="text">
+    <string>项目属性表</string>
+   </property>
+  </action>
+  <action name="actionx64">
+   <property name="text">
+    <string>x64</string>
+   </property>
+  </action>
+  <action name="actionWin32">
+   <property name="text">
+    <string>Win32</string>
+   </property>
+  </action>
+  <action name="new_props_action">
+   <property name="text">
+    <string>新建属性表</string>
+   </property>
+  </action>
+  <action name="save_props_action">
+   <property name="text">
+    <string>保存当前属性表</string>
+   </property>
+  </action>
+  <action name="close_props_action">
+   <property name="text">
+    <string>关闭当前属性表</string>
+   </property>
+  </action>
+  <action name="project_props_action">
+   <property name="text">
+    <string>项目属性表</string>
+   </property>
+  </action>
+  <action name="win64_props_action">
+   <property name="text">
+    <string>x64</string>
+   </property>
+  </action>
+  <action name="win32_props_action">
+   <property name="text">
+    <string>Win32</string>
+   </property>
+  </action>
+  <action name="about_action">
+   <property name="text">
+    <string>关于</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
