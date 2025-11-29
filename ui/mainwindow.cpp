@@ -7,7 +7,11 @@
 #include <QDir>
 #include <QDebug>
 #include <QMessageBox>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QInputDialog>
 
+#include "azh/version.hpp"
 #include "azh/props.h"
 #include "attribute_table_widget.h"
 
@@ -65,7 +69,7 @@ void MainWindow::remove_attribute_table_widget()
     else
     {
         w->load_props(props());
-        QMessageBox::about(this,"提示","已经是最后一个属性表，已为您执行清空操作");
+        QMessageBox::about(this,"tips","已经是最后一个属性表，已为您执行清空操作");
     }
 }
 
@@ -74,10 +78,10 @@ void MainWindow::init()
     QString props_root = QDir::homePath() + "/AppData/Local/Microsoft/MSBuild/v4.0";
 
     connect(ui->win64_props_action,&QAction::triggered,this,[=](){
-        props p(props_root.toStdString()+"/"+get_user_props_name_by_platform(platform_type::Win64));
+        props p(qstring2std(props_root)+"/"+get_user_props_name_by_platform(platform_type::Win64),0);
         if(!p.is_load())
         {
-            QMessageBox::StandardButton btn=QMessageBox::warning(this,"Import Props","全局属性表路径不存在，是否创建",QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
+            QMessageBox::StandardButton btn=QMessageBox::warning(this,"import props","全局属性表路径不存在，是否创建",QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
 
             if(btn==QMessageBox::No)
             {
@@ -87,17 +91,17 @@ void MainWindow::init()
             QDir dir;
             dir.mkpath(props_root);
             p.save();
-            QMessageBox::about(this,"Import Props","已为您创建 x64 全局属性表");
+            QMessageBox::about(this,"import props","已为您创建 x64 全局属性表");
         }
         // p.print_content();
         new_attribute_table_wdiget_by_props(p);
     });
 
     connect(ui->win32_props_action,&QAction::triggered,this,[=](){
-        props p(props_root.toStdString()+"/"+get_user_props_name_by_platform(platform_type::Win32));
+        props p(qstring2std(props_root)+"/"+get_user_props_name_by_platform(platform_type::Win32),1);
         if(!p.is_load())
         {
-            QMessageBox::StandardButton btn=QMessageBox::warning(this,"Import Props","全局属性表路径不存在，是否创建",QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
+            QMessageBox::StandardButton btn=QMessageBox::warning(this,"import props","全局属性表路径不存在，是否创建",QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
 
             if(btn==QMessageBox::No)
             {
@@ -107,7 +111,7 @@ void MainWindow::init()
             QDir dir;
             dir.mkpath(props_root);
             p.save();
-            QMessageBox::about(this,"Import Props","已为您创建 Win32 全局属性表");
+            QMessageBox::about(this,"import props","已为您创建 Win32 全局属性表");
         }
         // p.print_content();
         new_attribute_table_wdiget_by_props(p);
@@ -123,27 +127,27 @@ void MainWindow::init()
 
             if(filepath.endsWith(".props"))
             {
-                p.load(filepath.toStdString());
+                p.load(qstring2std(filepath));
             }
             else if(filepath.endsWith(".vcxproj"))
             {
-                p=props::from_project_file(filepath.toStdString());
+                p=props::from_project_file(qstring2std(filepath));
             }
             else
             {
-                QMessageBox::warning(this,"Open props/project","未知的文件格式！");
+                QMessageBox::warning(this,"open props/project","未知的文件格式！");
                 return;
             }
 
             if(!p.check())
             {
-                QMessageBox::warning(this,"Open props/project","选择的项目/属性表文件格式有误，请检查文件过后重试！");
+                QMessageBox::warning(this,"open props/project","选择的项目/属性表文件格式有误，请检查文件过后重试！");
                 return;
             }
 
             new_attribute_table_wdiget_by_props(p);
 
-            QMessageBox::about(this,"导入项目/属性表","导入成功！");
+            QMessageBox::about(this,"open props/project","导入成功！");
         }
     });
 
@@ -155,31 +159,35 @@ void MainWindow::init()
         {
             attribute_table_widget* w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
             props p=w->get_props();
-            
-            const QString& filepath=QFileDialog::getSaveFileName(this, QStringLiteral("save props file"), "",QStringLiteral("props file(*.props)"));
-            if(filepath.isEmpty())
-            {
-                QMessageBox::about(this,"保存属性表","未选择保存路径，已取消");
-                return;
-            }
 
-            p.save(filepath.toStdString());
-            w->load_props(p);
+            w->save();
         }
     });
 
     connect(ui->close_props_action,&QAction::triggered,this,&MainWindow::remove_attribute_table_widget);
 
     connect(this,&MainWindow::add_props_editor,this,[=](attribute_table_widget* w,const props& p){
-        ui->props_editors->addTab(w,"");
-        w->load_props(p);
+        attribute_table_widget* curr_w=nullptr;
+        if(ui->props_editors->count()==1)
+        {
+            curr_w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
+        }
+
+        if(curr_w&&!curr_w->is_load())
+        {
+            curr_w->load_props(p);
+        }
+        else
+        {
+            ui->props_editors->addTab(w,"");
+            w->load_props(p);
+        }
     });
 
     connect(this,&MainWindow::remove_props_editor,this,[=](attribute_table_widget* w){
         int index = ui->props_editors->indexOf(w);
         if (index != -1)
         {
-            // ui->props_editors->setCurrentIndex(index-1);
             ui->props_editors->removeTab(index);
         }
         else
@@ -189,15 +197,176 @@ void MainWindow::init()
         
     });
 
+    connect(ui->open_props_path_action,&QAction::triggered,this,[=](){
+        int n=ui->props_editors->count();
+        if (n>=1)
+        {
+            attribute_table_widget* w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
+            props p=w->get_props();
+
+            if(p.is_load())
+            {
+                QString props_path=std2qstring(std::filesystem::path(p.get_path()).parent_path().string());
+                QDesktopServices::openUrl(QUrl::fromLocalFile(props_path));
+            }
+            else
+            {
+                QMessageBox::warning(this,"tips","当前属性表为空或者属性表路径不存在");
+            }
+        }
+    });
+
+    connect(ui->list_sub_props_action,&QAction::triggered,this,[=](){
+        int n=ui->props_editors->count();
+        if (n>=1)
+        {
+            attribute_table_widget* w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
+            props p=w->get_props();
+
+            if(!p.is_load())
+            {
+                QMessageBox::warning(this,"list sub props","当前属性表为空或者属性表路径不存在,无法查看子属性表");
+                return;
+            }
+
+            const std::vector<std::string>& sheets=p.get_property_sheets();
+            QStringList sub_props;
+
+            for(const auto& s : sheets)
+            {
+                sub_props.push_back(std2qstring(s));
+            }
+
+            if(sub_props.empty())
+            {
+                QMessageBox::warning(this,"list sub props","当前属性表无子属性表");
+                return;
+            }
+
+            QMessageBox::about(this,"list sub props","当前属性表的子属性表有: \n"+sub_props.join("\n"));
+        }
+    });
+
+    connect(ui->add_sub_props_action,&QAction::triggered,this,[=](){
+        int n=ui->props_editors->count();
+        if (n>=1)
+        {
+            attribute_table_widget* w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
+            props p=w->get_props();
+
+            if(!p.is_load())
+            {
+                QMessageBox::warning(this,"add sub props","当前属性表为空或者属性表路径不存在,无法添加子属性表");
+                return;
+            }
+
+            const QString& filepath=QFileDialog::getOpenFileName(this, QStringLiteral("add sub props to current props"), "",QStringLiteral("props file(*.props)"));
+        
+            if(filepath.isEmpty())
+            {
+                QMessageBox::warning(this,"add sub props","用户取消了 '添加子属性表'");
+                return;
+            }
+
+            p.add_property_sheet(qstring2std(filepath));
+            w->load_props(p);
+            w->set_edit_state(true);
+            QMessageBox::about(this,"add sub props","添加子属性表成功,默认不保存到文件，请自行保存");
+        }
+    });
+
+    connect(ui->remove_sub_props_action,&QAction::triggered,this,[=](){
+        int n=ui->props_editors->count();
+        if (n>=1)
+        {
+            attribute_table_widget* w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
+            props p=w->get_props();
+
+            if(!p.is_load())
+            {
+                QMessageBox::warning(this,"remove sub props","当前属性表为空或者属性表路径不存在,无法删除子属性表");
+                return;
+            }
+
+            const std::vector<std::string>& sheets=p.get_property_sheets();
+            QStringList sub_props;
+
+            for(const auto& s : sheets)
+            {
+                sub_props.push_back(std2qstring(s));
+            }
+
+            if(sub_props.empty())
+            {
+                QMessageBox::warning(this,"remove sub props","当前属性表无子属性表,无需删除子属性表");
+                return;
+            }
+
+            // select sub props
+
+            bool ok;
+            QString sub_props_file = QInputDialog::getItem(this,"remove sub props","请选择要删除的子属性表:",sub_props,0,false,&ok);
+
+            if (!ok ||sub_props_file.isEmpty())
+            {
+                QMessageBox::warning(this,"remove sub props","用户取消了 '删除子属性表'");
+            }
+
+            // remove sub_props_file from current props's property_sheets
+
+            p.remove_property_sheet(qstring2std(sub_props_file));
+            w->load_props(p);
+            w->set_edit_state(true);
+            QMessageBox::about(this,"add sub props","删除子属性表成功,默认不保存到文件，请自行保存");
+        }
+    });
+
+    connect(ui->cover_props_action,&QAction::triggered,this,[=](){
+        int n=ui->props_editors->count();
+        if (n>=1)
+        {
+            attribute_table_widget* w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
+            props p=w->get_props();
+
+            if(!p.is_load())
+            {
+                QMessageBox::warning(this,"cover current props","当前属性表为空或者属性表路径不存在,无需覆盖该属性表");
+                return;
+            }
+
+            const QString& filepath=QFileDialog::getOpenFileName(this, QStringLiteral("select props file to cover current props"), "",QStringLiteral("props file(*.props)"));
+        
+            if(!filepath.isEmpty())
+            {
+                props temp_p(qstring2std(filepath));
+
+                if(!temp_p.is_load()||!temp_p.check())
+                {
+                    QMessageBox::warning(this,"cover current props","选择的属性表格式异常，终止操作");
+                    return;
+                }
+
+                QString save_path=std2qstring(p.get_path());
+
+                w->load_props(temp_p);
+                w->save_as(save_path);
+                QMessageBox::about(this,"cover current props","覆盖成功");
+            }
+        }
+    });
+
     connect(ui->about_action,&QAction::triggered,this,[=](){
         QMessageBox box;
         box.setTextInteractionFlags(Qt::TextSelectableByMouse);
         box.setDetailedText("https://github.com/azh-1415926/VSATEditor");
         box.setWindowTitle("About");
-        box.setText("本软件用于导入、编辑、导出 VS 属性表,欢迎各位提建议\n项目链接：https://github.com/azh-1415926/VSATEditor");
-        // box.setText();
-        // box.show("About","本软件用于导入、编辑、导出 VS 属性表\n仓库链接：https://github.com/azh-1415926/VSATEditor\n欢迎各位提建议");
+        box.setText("本软件用于导入、编辑、导出 VS 属性表,欢迎各位提建议\n当前软件版本："+QString::fromStdString(AZH_VERSION)+"\n项目链接：https://github.com/azh-1415926/VSATEditor");
+
         box.exec();
+    });
+
+    connect(ui->about_qt_action,&QAction::triggered,this,[=](){
+        QMessageBox::aboutQt(this);
     });
     
     new_attribute_table_wdiget();

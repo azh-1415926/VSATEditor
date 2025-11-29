@@ -59,6 +59,24 @@ struct attribute_table_config
             preprocessor_defs.push_back("_CONSOLE");
             break;
 
+        /* Debug Win32 */
+        case 2:
+            build_type = configuration_type::Debug;
+            platform = platform_type::Win32;
+
+            preprocessor_defs.push_back("_DEBUG");
+            preprocessor_defs.push_back("_CONSOLE");
+            break;
+
+        /* Release Win32 */
+        case 3:
+            build_type = configuration_type::Release;
+            platform = platform_type::Win32;
+
+            preprocessor_defs.push_back("NDEBUG");
+            preprocessor_defs.push_back("_CONSOLE");
+            break;
+
         default:
             break;
         }

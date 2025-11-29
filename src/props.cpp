@@ -1,15 +1,25 @@
 #include "azh/props.h"
 #include "azh/logger.h"
 
-props::props()
+props::props(int preset)
 {
-    attribute_table_config debug(0);
-    attribute_table_config release(1);
+    if(preset==0)
+    {
+        attribute_table_config debug(0);
+        attribute_table_config release(1);
 
-    create(debug, release);
+        create(debug, release);
+    }
+    else
+    {
+        attribute_table_config debug(2);
+        attribute_table_config release(3);
+
+        create(debug, release);
+    }
 }
 
-props::props(const std::string &xml_path): m_xml_path(xml_path)
+props::props(const std::string &xml_path, int preset): m_xml_path(xml_path)
 {
     pugi::xml_parse_result result = m_doc.load_file(m_xml_path.c_str());
 
@@ -18,10 +28,20 @@ props::props(const std::string &xml_path): m_xml_path(xml_path)
         azh::logger(azh::LOGGER_LEVEL::LOG_WARNNING) << "Load xml file error : " << result.description();
         azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Try to init a empty xml.";
 
-        attribute_table_config debug(0);
-        attribute_table_config release(1);
+        if(preset==0)
+        {
+            attribute_table_config debug(0);
+            attribute_table_config release(1);
 
-        create(debug, release);
+            create(debug, release);
+        }
+        else
+        {
+            attribute_table_config debug(2);
+            attribute_table_config release(3);
+
+            create(debug, release);
+        }
     }
 }
 

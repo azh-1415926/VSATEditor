@@ -61,8 +61,26 @@
      <string>其他</string>
     </property>
     <addaction name="about_action"/>
+    <addaction name="about_qt_action"/>
+   </widget>
+   <widget class="QMenu" name="props_menu">
+    <property name="title">
+     <string>属性表</string>
+    </property>
+    <widget class="QMenu" name="menu_2">
+     <property name="title">
+      <string>子属性表</string>
+     </property>
+     <addaction name="list_sub_props_action"/>
+     <addaction name="add_sub_props_action"/>
+     <addaction name="remove_sub_props_action"/>
+    </widget>
+    <addaction name="open_props_path_action"/>
+    <addaction name="menu_2"/>
+    <addaction name="cover_props_action"/>
    </widget>
    <addaction name="file_menu"/>
+   <addaction name="props_menu"/>
    <addaction name="other_menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -98,7 +116,7 @@
   </action>
   <action name="project_props_action">
    <property name="text">
-    <string>项目属性表</string>
+    <string>项目/属性表</string>
    </property>
   </action>
   <action name="win64_props_action">
@@ -113,7 +131,37 @@
   </action>
   <action name="about_action">
    <property name="text">
-    <string>关于</string>
+    <string>关于本项目</string>
+   </property>
+  </action>
+  <action name="open_props_path_action">
+   <property name="text">
+    <string>打开所在文件夹</string>
+   </property>
+  </action>
+  <action name="list_sub_props_action">
+   <property name="text">
+    <string>查看</string>
+   </property>
+  </action>
+  <action name="add_sub_props_action">
+   <property name="text">
+    <string>导入</string>
+   </property>
+  </action>
+  <action name="remove_sub_props_action">
+   <property name="text">
+    <string>删除</string>
+   </property>
+  </action>
+  <action name="cover_props_action">
+   <property name="text">
+    <string>以...覆盖</string>
+   </property>
+  </action>
+  <action name="about_qt_action">
+   <property name="text">
+    <string>关于 Qt</string>
    </property>
   </action>
  </widget>

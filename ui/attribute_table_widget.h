@@ -40,12 +40,16 @@ public:
     ~attribute_table_widget();
 
     attribute_table_status status() { return m_state; }
+    bool is_edit() { return m_state==attribute_table_status::NO_SAVE; }
+    void set_edit_state(bool is_edit) { if(is_edit&&is_load()) m_state=attribute_table_status::NO_SAVE; }
+    bool is_load();
 
     props get_props() { return m_data; }
 
 public slots:
     void load_props(const props& p);
-    void save(const QString& file_path="");
+    void save(bool silence=false);
+    void save_as(const QString& file_path,bool to_rename=true);
 
 signals:
     void rename(attribute_table_widget*,const QString&);
@@ -70,5 +74,19 @@ private:
 
     void switch_view();
 };
+
+inline QString std2qstring(const std::string& s)
+{
+    #if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+        return QString::fromLocal8Bit(s);
+    #elif (QT_VERSION < QT_VERSION_CHECK(6,0,0))
+        return QString::fromLocal8Bit(s.data());
+    #endif
+}
+
+inline std::string qstring2std(const QString& s)
+{
+    return s.toLocal8Bit().toStdString();
+}
 
 #endif // ATTRIBUTE_TABLE_H

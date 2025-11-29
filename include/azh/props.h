@@ -88,8 +88,9 @@ class props
     std::string m_xml_path;
 
 public:
-    props();
-    explicit props(const std::string &xml_path);
+    /* preset 0-> x64 , 1 -> Win32 */
+    props(int preset=0);
+    explicit props(const std::string &xml_path,int preset=0);
 
     props(const props &p): m_xml_path(p.m_xml_path)
     {

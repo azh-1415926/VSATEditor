@@ -7,6 +7,7 @@
 
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QDebug>
 
 static QList<QPair<QString,QString>> default_attributes={
     QPair<QString,QString>("C/C++ 预处理宏定义","ClCompile|PreprocessorDefinitions"),
@@ -31,6 +32,11 @@ attribute_table_widget::~attribute_table_widget()
     delete ui;
 }
 
+bool attribute_table_widget::is_load()
+{
+    return m_data.is_load();
+}
+
 void attribute_table_widget::load_props(const props& p)
 {
     m_state=attribute_table_status::NO_EDIT;
@@ -40,7 +46,7 @@ void attribute_table_widget::load_props(const props& p)
     init_conf();
 
     std::string xml_path=m_data.get_path();
-    QString s=QString::fromStdString(xml_path);
+    QString s=std2qstring(xml_path);
 
     if(s.isEmpty()||!std::filesystem::exists(std::filesystem::path(xml_path).parent_path()))
     {
@@ -48,16 +54,47 @@ void attribute_table_widget::load_props(const props& p)
         return;
     }
 
-    emit rename(this,QString::fromStdString(std::filesystem::path(xml_path).filename().string()));
+    emit rename(this,std2qstring(std::filesystem::path(xml_path).filename().string()));
 }
 
-void attribute_table_widget::save(const QString& file_path)
+void attribute_table_widget::save(bool silence)
+{
+    if(m_state==attribute_table_status::NO_SAVE&&m_data.is_load())
+    {
+        save_as((std2qstring(m_data.get_path())));
+
+        if(!silence)
+            QMessageBox::about(this,"save props/project","保存成功");
+        return;
+    }
+    else if(m_state==attribute_table_status::NO_EDIT&&is_load())
+    {
+        QMessageBox::about(this,"save props/project","未编辑，无需保存");
+        return;
+    }
+
+    const QString& filepath=QFileDialog::getSaveFileName(this, QStringLiteral("save props/project file"), "",QStringLiteral("props file(*.props)"));
+    if(filepath.isEmpty())
+    {
+        if(!silence)
+            QMessageBox::warning(this,"save props/project","用户取消了 '保存'");
+        return;
+    }
+
+    if(m_state==attribute_table_status::NO_SAVE)
+    {
+        save_as(filepath);
+        QMessageBox::about(this,"save props/project","保存成功，已保存至"+filepath);
+    }
+}
+
+void attribute_table_widget::save_as(const QString& file_path,bool to_rename)
 {
     m_state=attribute_table_status::NO_EDIT;
 
     for(const QString& attr_name : m_attr_cache.keys())
     {
-        std::string value=m_attr_cache.value(attr_name).toStdString();
+        std::string value=m_attr_cache.value(attr_name).toLocal8Bit().toStdString();
 
         QStringList list=attr_name.split("|");
         if(list.isEmpty())
@@ -66,32 +103,32 @@ void attribute_table_widget::save(const QString& file_path)
         }
 
         bool isClCompile=list.at(0)=="ClCompile";
-        std::string attr=list.at(1).toStdString();
+        std::string attr=list.at(1).toLocal8Bit().toStdString();
 
         std::string condition=get_condition(m_curr_conf.configuration,m_curr_conf.platform);
         m_data.set_attr_by_name(attr,value,condition,isClCompile);
     }
 
-    if(file_path.isEmpty())
+    m_data.save(file_path.toLocal8Bit().toStdString());
+
+    if(to_rename)
     {
-        m_data.save();
-    }
-    else
-    {
-        m_data.save(file_path.toStdString());
-        emit rename(this,file_path.last(file_path.size()-file_path.lastIndexOf("/")-1));
+        #if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+            emit rename(this,file_path.last(file_path.size()-file_path.lastIndexOf("/")-1));
+        #elif (QT_VERSION < QT_VERSION_CHECK(6,0,0))
+            const QStringList& list=file_path.split("/");
+            if(!file_path.isEmpty()&&!list.isEmpty())
+            {
+                const QStringList& list=file_path.split("/");
+                emit rename(this,list.at(list.size()-1));
+            }
+        #endif
     }
 }
 
 void attribute_table_widget::init()
 {
     m_state=attribute_table_status::NO_LOAD;
-
-    connect(ui->attrs,&QListWidget::itemClicked,this,[=](QListWidgetItem* i){
-        // QListWidgetItem* attr=ui->attrs->item(i);
-        // // qDebug()<<"Attr : "<<attr->objectName();
-        qDebug()<<"Attr : "<<i->text();
-    });
 
     QStringList attr_names;
 
@@ -113,12 +150,12 @@ void attribute_table_widget::init()
             return;
 
         bool isClCompile=list.at(0)=="ClCompile";
-        std::string attr=list.at(1).toStdString();
+        std::string attr=list.at(1).toLocal8Bit().toStdString();
 
         std::string condition=get_condition(m_curr_conf.configuration,m_curr_conf.platform);
         std::string value=m_data.get_attr_by_name(attr,condition,isClCompile);
-        ui->orignal_text->setText(QString::fromStdString(value));
-        ui->orignal_muti_lines_text->setText(QString::fromStdString(value).replace(";","\n"));
+        ui->orignal_text->setText(std2qstring(value));
+        ui->orignal_muti_lines_text->setText(std2qstring(value).replace(";","\n"));
 
         QString cache=m_attr_cache.value(default_attributes[i].second);
 
@@ -131,8 +168,8 @@ void attribute_table_widget::init()
         }
         else
         {
-            ui->alter_text->setText(QString::fromStdString(value));
-            ui->alter_muti_lines_text->setText(QString::fromStdString(value).replace(";","\n"));
+            ui->alter_text->setText(std2qstring(value));
+            ui->alter_muti_lines_text->setText(std2qstring(value).replace(";","\n"));
         }
         ui->alter_text->blockSignals(false);
         ui->alter_muti_lines_text->blockSignals(false);
@@ -244,47 +281,24 @@ void attribute_table_widget::init()
 
 void attribute_table_widget::init_action()
 {
-    connect(ui->save_btn,&QPushButton::clicked,this,[=](){
-        if(m_data.is_load())
-        {
-            save();
-            return;
-        }
-
-        if(m_state==attribute_table_status::NO_EDIT)
-        {
-            QMessageBox::about(this,"Save Props Or Project","未编辑，无需保存");
-            return;
-        }
-
-        const QString& filepath=QFileDialog::getSaveFileName(this, QStringLiteral("Save Props Or Project File"), "",QStringLiteral("props file(*.props)"));
-        if(filepath.isEmpty())
-        {
-            QMessageBox::warning(this,"Save Props Or Project","用户取消了 '保存'");
-            return;
-        }
-
-        if(m_state==attribute_table_status::NO_SAVE)
-        {
-            save(filepath);
-        }
-    });
+    connect(ui->save_btn,&QPushButton::clicked,this,&attribute_table_widget::save);
 
     connect(ui->save_as_btn,&QPushButton::clicked,this,[=](){
         const QString& filepath=QFileDialog::getSaveFileName(this, QStringLiteral("Save Props Or Project file"), "",QStringLiteral("props file(*.props)"));
         if(filepath.isEmpty())
         {
-            QMessageBox::warning(this,"Save Props Or Project","用户取消了 '另存为'");
+            QMessageBox::warning(this,"save as props","用户取消了 '另存为'");
             return;
         }
 
-        save(filepath);
+        save_as(filepath);
+        QMessageBox::about(this,"save as props","保存成功，已保存至"+filepath);
     });
 
     connect(ui->exit_nosave_btn,&QPushButton::clicked,this,[=](){
         if(m_state==attribute_table_status::NO_SAVE)
         {
-            QMessageBox::StandardButton btn=QMessageBox::warning(this,"Close Props Editor","你确定要关闭当前属性表吗，该属性表并未保存",QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
+            QMessageBox::StandardButton btn=QMessageBox::warning(this,"close props editor","你确定要关闭当前属性表吗，该属性表并未保存",QMessageBox::Yes|QMessageBox::No,QMessageBox::No);
 
             if(btn==QMessageBox::No)
             {
@@ -375,11 +389,11 @@ void attribute_table_widget::refresh()
                     continue;
 
                 bool isClCompile=list.at(0)=="ClCompile";
-                std::string attr=list.at(1).toStdString();
+                std::string attr=qstring2std(list.at(1));
 
                 std::string condition=get_condition(m_curr_conf.configuration,m_curr_conf.platform);
                 std::string value=m_data.get_attr_by_name(attr,condition,isClCompile);
-                QString text=QString::fromStdString(value);
+                QString text=std2qstring(value);
                 
                 ui->orignal_text->setText(text);
 
