@@ -64,7 +64,7 @@ void MainWindow::remove_attribute_table_widget()
     attribute_table_widget* w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
     if(n>1)
     {
-        remove_props_editor(w);
+        emit remove_props_editor(w);
     }
     else
     {
@@ -75,8 +75,10 @@ void MainWindow::remove_attribute_table_widget()
 
 void MainWindow::init()
 {
+    /* 全局属性表所在文件夹 */
     QString props_root = QDir::homePath() + "/AppData/Local/Microsoft/MSBuild/v4.0";
 
+    /* open/create win64 global props */
     connect(ui->win64_props_action,&QAction::triggered,this,[=](){
         props p(qstring2std(props_root)+"/"+get_user_props_name_by_platform(platform_type::Win64),0);
         if(!p.is_load())
@@ -97,6 +99,7 @@ void MainWindow::init()
         new_attribute_table_wdiget_by_props(p);
     });
 
+    /* open/create win32 global props */
     connect(ui->win32_props_action,&QAction::triggered,this,[=](){
         props p(qstring2std(props_root)+"/"+get_user_props_name_by_platform(platform_type::Win32),1);
         if(!p.is_load())
@@ -117,6 +120,7 @@ void MainWindow::init()
         new_attribute_table_wdiget_by_props(p);
     });
 
+    /* open props/vcxproj */
     connect(ui->project_props_action,&QAction::triggered,this,[=](){
 
         const QString& filepath=QFileDialog::getOpenFileName(this, QStringLiteral("select props/project file"), "",QStringLiteral("props/project file(*.vcxproj *.props)"));
@@ -151,8 +155,10 @@ void MainWindow::init()
         }
     });
 
+    /* new props editor */
     connect(ui->new_props_action,&QAction::triggered,this,&MainWindow::new_attribute_table_wdiget);
 
+    /* save props by current props editor */
     connect(ui->save_props_action,&QAction::triggered,this,[=](){
         int n=ui->props_editors->count();
         if (n>=1)
@@ -164,8 +170,10 @@ void MainWindow::init()
         }
     });
 
+    /* close current props editor */
     connect(ui->close_props_action,&QAction::triggered,this,&MainWindow::remove_attribute_table_widget);
 
+    /* new props editor */
     connect(this,&MainWindow::add_props_editor,this,[=](attribute_table_widget* w,const props& p){
         attribute_table_widget* curr_w=nullptr;
         if(ui->props_editors->count()==1)
@@ -184,6 +192,7 @@ void MainWindow::init()
         }
     });
 
+    /* close current props editor */
     connect(this,&MainWindow::remove_props_editor,this,[=](attribute_table_widget* w){
         int index = ui->props_editors->indexOf(w);
         if (index != -1)
@@ -197,6 +206,7 @@ void MainWindow::init()
         
     });
 
+    /* open current props's directory */
     connect(ui->open_props_path_action,&QAction::triggered,this,[=](){
         int n=ui->props_editors->count();
         if (n>=1)
@@ -216,6 +226,7 @@ void MainWindow::init()
         }
     });
 
+    /* list sub props */
     connect(ui->list_sub_props_action,&QAction::triggered,this,[=](){
         int n=ui->props_editors->count();
         if (n>=1)
@@ -247,6 +258,7 @@ void MainWindow::init()
         }
     });
 
+    /* add sub props */
     connect(ui->add_sub_props_action,&QAction::triggered,this,[=](){
         int n=ui->props_editors->count();
         if (n>=1)
@@ -275,6 +287,7 @@ void MainWindow::init()
         }
     });
 
+    /* remove sub props */
     connect(ui->remove_sub_props_action,&QAction::triggered,this,[=](){
         int n=ui->props_editors->count();
         if (n>=1)
@@ -310,6 +323,7 @@ void MainWindow::init()
             if (!ok ||sub_props_file.isEmpty())
             {
                 QMessageBox::warning(this,"remove sub props","用户取消了 '删除子属性表'");
+                return;
             }
 
             // remove sub_props_file from current props's property_sheets
@@ -321,6 +335,7 @@ void MainWindow::init()
         }
     });
 
+    /* use other props cover current props */
     connect(ui->cover_props_action,&QAction::triggered,this,[=](){
         int n=ui->props_editors->count();
         if (n>=1)
@@ -355,8 +370,9 @@ void MainWindow::init()
         }
     });
 
+    /* about current project */
     connect(ui->about_action,&QAction::triggered,this,[=](){
-        QMessageBox box;
+        QMessageBox box(this);
         box.setTextInteractionFlags(Qt::TextSelectableByMouse);
         box.setDetailedText("https://github.com/azh-1415926/VSATEditor");
         box.setWindowTitle("About");
@@ -365,6 +381,7 @@ void MainWindow::init()
         box.exec();
     });
 
+    /* about Qt */
     connect(ui->about_qt_action,&QAction::triggered,this,[=](){
         QMessageBox::aboutQt(this);
     });

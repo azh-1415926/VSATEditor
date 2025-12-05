@@ -41,7 +41,19 @@ public:
 
     attribute_table_status status() { return m_state; }
     bool is_edit() { return m_state==attribute_table_status::NO_SAVE; }
-    void set_edit_state(bool is_edit) { if(is_edit&&is_load()) m_state=attribute_table_status::NO_SAVE; }
+    void set_edit_state(bool is_edit)
+    {
+        if(is_edit&&is_load()) 
+        {
+            m_state=attribute_table_status::NO_SAVE;
+            emit rename(this,m_name+" [*]");
+        }
+        else if(!is_edit&&is_load()) 
+        {
+            m_state=attribute_table_status::NO_EDIT;
+            emit rename(this,m_name);
+        }
+    }
     bool is_load();
 
     props get_props() { return m_data; }
@@ -59,6 +71,7 @@ signals:
 
 private:
     Ui::attribute_table_widget *ui;
+    QString m_name;
     attribute_table_status m_state;
     props m_data;
     attribute_table_conf m_curr_conf;
@@ -75,6 +88,7 @@ private:
     void switch_view();
 };
 
+/* std::string convert to QString */
 inline QString std2qstring(const std::string& s)
 {
     #if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
@@ -84,6 +98,7 @@ inline QString std2qstring(const std::string& s)
     #endif
 }
 
+/* QString convert to std::string */
 inline std::string qstring2std(const QString& s)
 {
     return s.toLocal8Bit().toStdString();
