@@ -181,7 +181,7 @@ void MainWindow::init()
             curr_w=static_cast<attribute_table_widget*>(ui->props_editors->currentWidget());
         }
 
-        if(curr_w&&!curr_w->is_load())
+        if(curr_w&&!curr_w->is_load()&&p.is_load())
         {
             curr_w->load_props(p);
         }
@@ -376,7 +376,11 @@ void MainWindow::init()
         box.setTextInteractionFlags(Qt::TextSelectableByMouse);
         box.setDetailedText("https://github.com/azh-1415926/VSATEditor");
         box.setWindowTitle("About");
-        box.setText("本软件用于导入、编辑、导出 VS 属性表,欢迎各位提建议\n当前软件版本："+QString::fromStdString(AZH_VERSION)+"\n项目链接：https://github.com/azh-1415926/VSATEditor");
+        box.setText("本软件用于导入、编辑、导出 VS 属性表,欢迎各位提建议\n"
+                    "版本       : "+QString::fromStdString(AZH_VERSION)+"\n"
+                    "作者       : azh\n"
+                    "项目链接 : https://github.com/azh-1415926/VSATEditor"
+        );
 
         box.exec();
     });

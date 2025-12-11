@@ -119,7 +119,7 @@ public:
     void save();
     void save(const std::string &xml_path);
 
-    bool is_load() { return !m_xml_path.empty()&&std::filesystem::exists(m_xml_path); }
+    bool is_load() const { return !m_xml_path.empty()&&std::filesystem::exists(m_xml_path); }
     std::string get_path() { return m_xml_path; }
 
     bool check();

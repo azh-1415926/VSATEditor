@@ -137,6 +137,8 @@ void attribute_table_widget::save_as(const QString& file_path,bool to_rename)
             }
         #endif
     }
+
+    refresh();
 }
 
 void attribute_table_widget::init()
