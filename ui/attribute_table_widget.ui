@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>477</width>
     <height>300</height>
    </rect>
   </property>
@@ -50,7 +50,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>105</width>
+          <width>127</width>
           <height>218</height>
          </rect>
         </property>
@@ -72,7 +72,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>248</width>
+          <width>303</width>
           <height>226</height>
          </rect>
         </property>
@@ -158,6 +158,13 @@
       <widget class="QPushButton" name="exit_nosave_btn">
        <property name="text">
         <string>不保存关闭</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="add_path_btn">
+       <property name="text">
+        <string>添加附加目录/附加依赖项</string>
        </property>
       </widget>
      </item>

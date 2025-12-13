@@ -71,11 +71,17 @@ signals:
 
 private:
     Ui::attribute_table_widget *ui;
+    /* tabname */
     QString m_name;
+    /* props edit state */
     attribute_table_status m_state;
+    /* props */
     props m_data;
+    /* current configuration(Debug/Release) and platform(x64/Win32) */
     attribute_table_conf m_curr_conf;
+    /* view type */
     attribute_table_view m_curr_view;
+    /* edited attribute contents cache */
     QMap<QString,QString> m_attr_cache;
 
     void init();

@@ -370,12 +370,117 @@ void MainWindow::init()
         }
     });
 
+    /* links */
+    connect(ui->links_action,&QAction::triggered,this,[=](){
+        QMessageBox box(this);
+        box.setTextInteractionFlags(Qt::TextSelectableByMouse);
+        QString str="CGAl、Boost、PCL 下载链接参考：\n"
+            "1. CGAL gmp : https://github.com/CGAL/cgal/releases/download/v6.1/CGAL-6.1-win64-auxiliary-libraries-gmp-mpfr.zip\n"
+            "2. CGAL source : https://github.com/CGAL/cgal/releases/download/v6.1/CGAL-6.1.zip\n"
+            "3. Boost : https://archives.boost.io/release/1.89.0/binaries/boost_1_89_0-msvc-14.3-64.exe\n"
+            "4. PCL : https://github.com/PointCloudLibrary/pcl/releases/download/pcl-1.15.1/PCL-1.15.1-AllInOne-msvc2022-win64.exe\n"
+            "\nGithub 文件加速下载镜像：\n"
+            "https://gh-proxy.com/\n"
+            "https://github.akams.cn/\n";
+        box.setWindowTitle("参考链接");
+        box.setDetailedText(str);
+        box.setText(str);
+
+        box.exec();
+    });
+
+    /* custom library cmake template */
+    connect(ui->custom_library_cmake_template_action,&QAction::triggered,this,[=](){
+        QMessageBox box(this);
+        box.setTextInteractionFlags(Qt::TextSelectableByMouse);
+        QString str=
+            "cmake_minimum_required(VERSION 3.5)\n"
+            "project(Custom_Library_Demo)\n"
+            "\n"
+            "set(CMAKE_CXX_STANDARD 17)\n"
+            "\n"
+            "add_compile_options(\"$<$<C_COMPILER_ID:MSVC>:/utf-8>\")\n"
+            "add_compile_options(\"$<$<CXX_COMPILER_ID:MSVC>:/utf-8>\")\n"
+            "\n"
+            "find_package(Custom_Library REQUIRED)\n"
+            "\n"
+            "include_directories(${Custom_Library_INCLUDE_DIRS})\n"
+            "\n"
+            "add_executable(${PROJECT_NAME} main.cpp)\n"
+            "target_link_libraries(${PROJECT_NAME} PRIVATE ${Custom_Library_LIBRARIES})";
+        box.setWindowTitle("常规库 cmake 模板");
+        box.setDetailedText(str);
+        box.setText(str);
+
+        box.exec();
+    });
+
+    /* qt cmake template */
+    connect(ui->qt_cmake_template_action,&QAction::triggered,this,[=](){
+        QMessageBox box(this);
+        box.setTextInteractionFlags(Qt::TextSelectableByMouse);
+        QString str=
+            "cmake_minimum_required(VERSION 3.5)\n"
+            "project(Qt_Demo)\n"
+            "\n"
+            "set(CMAKE_INCLUDE_CURRENT_DIR ON)\n"
+            "set(CMAKE_AUTOUIC ON)\n"
+            "set(CMAKE_AUTOMOC ON)\n"
+            "set(CMAKE_AUTORCC ON)\n"
+            "set(CMAKE_CXX_STANDARD 17)\n"
+            "set(CMAKE_CXX_STANDARD_REQUIRED ON)\n"
+            "\n"
+            "add_compile_options(\"$<$<C_COMPILER_ID:MSVC>:/utf-8>\")\n"
+            "add_compile_options(\"$<$<CXX_COMPILER_ID:MSVC>:/utf-8>\")\n"
+            "\n"
+            "find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)\n"
+            "find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)\n"
+            "\n"
+            "file(GLOB_RECURSE srcs ${CMAKE_CURRENT_LIST_DIR}/*.c* ${CMAKE_CURRENT_LIST_DIR}/*.h*)\n"
+            "file(GLOB_RECURSE qrcs ${CMAKE_CURRENT_LIST_DIR}/*.qrc)\n"
+            "\n"
+            "list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS \".\")\n"
+            "\n"
+            "set(PROJECT_SOURCES\n"
+            "   ${srcs}\n"
+            "   ${qrcs}\n"
+            ")\n"
+            "add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})\n"
+            "target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)";
+
+        box.setWindowTitle("Qt cmake 模板");
+        box.setDetailedText(str);
+        box.setText(str);
+
+        box.exec();
+    });
+
+    /* help */
+    connect(ui->help_action,&QAction::triggered,this,[=](){
+        QMessageBox box(this);
+        box.setTextInteractionFlags(Qt::TextSelectableByMouse);
+        box.setWindowTitle("使用说明");
+        box.setText("假如要全局配置 CGAL 库：\n"
+            "1.下载 GMP and MPFR libraries, for Windows 64bits\n"
+            "2.下载安装 Boost 库（1.70-1.90 均可）\n"
+            "3.下载 CGAL 6.1 源码，编译安装\n"
+            "4.使用本工具，新建一个属性表，在 C/C++ 的附加包含目录中添加 gmp、boost、cgal 的头文件路径\n"
+            "5.使用本工具，在 C/C++ 的语言标准中输入 stdcpp17\n"
+            "6.使用本工具，在链接器的附加依赖项中添加 gmp、boost 的库文件\n"
+            "7.使用本工具，保存属性表到合适的路径下\n"
+            "8.使用本工具，打开全局 x64 属性表，在菜单属性表->子属性表->导入，并选择刚刚保存好的属性表\n"
+            "9.将 gmp、boost 的 dll 所在目录加到环境变量 Path 中\n"
+        );
+
+        box.exec();
+    });
+
     /* about current project */
     connect(ui->about_action,&QAction::triggered,this,[=](){
         QMessageBox box(this);
         box.setTextInteractionFlags(Qt::TextSelectableByMouse);
-        box.setDetailedText("https://github.com/azh-1415926/VSATEditor");
         box.setWindowTitle("About");
+        box.setDetailedText("https://github.com/azh-1415926/VSATEditor");
         box.setText("本软件用于导入、编辑、导出 VS 属性表,欢迎各位提建议\n"
                     "版本       : "+QString::fromStdString(AZH_VERSION)+"\n"
                     "作者       : azh\n"

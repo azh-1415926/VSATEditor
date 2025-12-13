@@ -79,8 +79,24 @@
     <addaction name="menu_2"/>
     <addaction name="cover_props_action"/>
    </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>查看</string>
+    </property>
+    <widget class="QMenu" name="menucmake">
+     <property name="title">
+      <string>cmake模板</string>
+     </property>
+     <addaction name="custom_library_cmake_template_action"/>
+     <addaction name="qt_cmake_template_action"/>
+    </widget>
+    <addaction name="links_action"/>
+    <addaction name="menucmake"/>
+    <addaction name="help_action"/>
+   </widget>
    <addaction name="file_menu"/>
    <addaction name="props_menu"/>
+   <addaction name="menu"/>
    <addaction name="other_menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -162,6 +178,26 @@
   <action name="about_qt_action">
    <property name="text">
     <string>关于 Qt</string>
+   </property>
+  </action>
+  <action name="custom_library_cmake_template_action">
+   <property name="text">
+    <string>常规库</string>
+   </property>
+  </action>
+  <action name="links_action">
+   <property name="text">
+    <string>参考链接</string>
+   </property>
+  </action>
+  <action name="help_action">
+   <property name="text">
+    <string>使用说明</string>
+   </property>
+  </action>
+  <action name="qt_cmake_template_action">
+   <property name="text">
+    <string>Qt</string>
    </property>
   </action>
  </widget>

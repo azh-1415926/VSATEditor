@@ -14,6 +14,7 @@ static QList<QPair<QString,QString>> default_attributes={
     QPair<QString,QString>("C/C++ 预处理宏定义","ClCompile|PreprocessorDefinitions"),
     QPair<QString,QString>("C/C++ 附加包含目录","ClCompile|AdditionalIncludeDirectories"),
     QPair<QString,QString>("C/C++ 其他选项","ClCompile|AdditionalOptions"),
+    QPair<QString,QString>("C/C++ 语言标准","ClCompile|LanguageStandard"),
     QPair<QString,QString>("链接器 附加库目录","Link|AdditionalLibraryDirectories"),
     QPair<QString,QString>("链接器 附加依赖项","Link|AdditionalDependencies"),
     QPair<QString,QString>("链接器 其他选项","Link|AdditionalOptions")
@@ -338,6 +339,60 @@ void attribute_table_widget::init_action()
         }
         
         emit exit();
+    });
+
+    /* add additional directories or additional libraries */
+    connect(ui->add_path_btn,&QPushButton::clicked,this,[=](){
+        auto items=ui->attrs->selectedItems();
+        if(items.empty())
+        {
+            QMessageBox::warning(this,"add directories/dependencies path","未选择任何属性，无法添加");
+            return;
+        }
+
+        /* 当前展示的属性 */
+        QStringList attr_names;
+
+        for(const auto& attr : default_attributes)
+        {
+            attr_names.push_back(attr.first);
+        }
+
+        int i=attr_names.indexOf(items.at(0)->text());
+        QString attr=default_attributes.at(i).second;
+
+        if(attr=="ClCompile|AdditionalIncludeDirectories"||attr=="Link|AdditionalLibraryDirectories")
+        {
+            QString dir_path=QFileDialog::getExistingDirectory(this,"add directories/dependencies path",QDir::currentPath());
+            if(dir_path.isEmpty())
+            {
+                QMessageBox::warning(this,"add directories/dependencies path","未选择附加目录/附加依赖项");
+                return;
+            }
+
+            if(ui->alter_text->toPlainText().isEmpty())
+                ui->alter_text->setText(dir_path);
+            else
+                ui->alter_text->setText(ui->alter_text->toPlainText()+";"+dir_path);
+        }
+        else if(attr=="Link|AdditionalDependencies")
+        {
+            QString libs_path=QFileDialog::getOpenFileNames(this,"add directories/dependencies path",QDir::currentPath(),"*.lib").join(";");
+            if(libs_path.isEmpty())
+            {
+                QMessageBox::warning(this,"add directories/dependencies path","未选择附加目录/附加依赖项");
+                return;
+            }
+
+            if(ui->alter_text->toPlainText().isEmpty())
+                ui->alter_text->setText(libs_path);
+            else
+                ui->alter_text->setText(ui->alter_text->toPlainText()+";"+libs_path);
+        }
+        else
+        {
+            QMessageBox::warning(this,"add directories/dependencies path","该属性无需添加附加目录/附加依赖项");
+        }
     });
 
     /* switch view action */
