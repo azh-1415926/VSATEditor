@@ -167,46 +167,24 @@ void attribute_table_widget::init()
 
     ui->attrs->addItems(attr_names);
     /* 当 QListWidget 被点击，则更新当前被点击属性的内容 */
-    connect(
-        ui->attrs, &QListWidget::itemClicked, this, [=](QListWidgetItem *item) {
-            int i = attr_names.indexOf(item->text());
+    connect(ui->attrs, &QListWidget::itemClicked, this,
+            [=](QListWidgetItem *item) {
+                int i = attr_names.indexOf(item->text());
+                QString attr = default_attributes[i].second;
 
-            if (i == -1)
-                return;
+                if (i == -1)
+                    return;
 
-            QStringList list = default_attributes[i].second.split("|");
-            if (list.count() < 2)
-                return;
+                ui->alter_text->blockSignals(true);
+                ui->alter_text->clear();
+                ui->alter_text->blockSignals(false);
 
-            bool isClCompile = list.at(0) == "ClCompile";
-            std::string attr = list.at(1).toLocal8Bit().toStdString();
+                ui->alter_muti_lines_text->blockSignals(true);
+                ui->alter_muti_lines_text->clear();
+                ui->alter_muti_lines_text->blockSignals(false);
 
-            std::string condition =
-                get_condition(m_curr_conf.configuration, m_curr_conf.platform);
-            std::string value =
-                m_data.get_attr_by_name(attr, condition, isClCompile);
-            ui->original_text->setText(std2qstring(value));
-            ui->original_muti_lines_text->setText(
-                std2qstring(value).replace(";", "\n"));
-
-            QString cache = m_attr_cache.value(default_attributes[i].second);
-
-            ui->alter_text->blockSignals(true);
-            ui->alter_muti_lines_text->blockSignals(true);
-            if (!cache.isEmpty())
-            {
-                ui->alter_text->setText(cache);
-                ui->alter_muti_lines_text->setText(cache.replace(";", "\n"));
-            }
-            else
-            {
-                ui->alter_text->setText(std2qstring(value));
-                ui->alter_muti_lines_text->setText(
-                    std2qstring(value).replace(";", "\n"));
-            }
-            ui->alter_text->blockSignals(false);
-            ui->alter_muti_lines_text->blockSignals(false);
-        });
+                update_view_content_by_attr(attr);
+            });
 
     /* 当切换 Debug/Release 时，存储当前配置，并清空保存的内容与刷新输入框内容
      */
@@ -297,8 +275,10 @@ void attribute_table_widget::init()
         qDebug() << "cache : " << ui->alter_text->toPlainText();
 
         ui->alter_muti_lines_text->blockSignals(true);
-        ui->alter_muti_lines_text->setText(value.replace(";", "\n"));
+        ui->alter_muti_lines_text->clear();
         ui->alter_muti_lines_text->blockSignals(false);
+
+        update_view_content_by_attr(attr);
     });
 
     /* 当多行内容编辑框，内容更改，则将状态切换为 unsave，并更新窗口名称，附带上
@@ -316,15 +296,24 @@ void attribute_table_widget::init()
         int i = attr_names.indexOf(items.at(0)->text());
         QString attr = default_attributes.at(i).second;
 
-        QString value =
-            ui->alter_muti_lines_text->toPlainText().replace("\n", ";");
+        QString value;
+        if (attr != "AdditionalOptions")
+        {
+            value = ui->alter_muti_lines_text->toPlainText().replace("\n", ";");
+        }
+        else
+        {
+            value = ui->alter_muti_lines_text->toPlainText().replace("\n", " ");
+        }
+
         m_attr_cache.insert(attr, value);
         qDebug() << "cache : " << value;
-        // refresh();
 
         ui->alter_text->blockSignals(true);
-        ui->alter_text->setText(value.replace("\n", ";"));
+        ui->alter_text->clear();
         ui->alter_text->blockSignals(false);
+
+        update_view_content_by_attr(attr);
     });
 }
 
@@ -548,7 +537,14 @@ void attribute_table_widget::refresh()
                 ui->alter_text->setText(text);
                 ui->alter_text->blockSignals(false);
 
-                text.replace(";", "\n");
+                if (attr != "AdditionalOptions")
+                {
+                    text.replace(";", "\n");
+                }
+                else
+                {
+                    text.replace(" ", "\n");
+                }
 
                 ui->original_muti_lines_text->setText(text);
 
@@ -582,4 +578,69 @@ void attribute_table_widget::switch_view()
     default:
         break;
     };
+}
+
+void attribute_table_widget::update_view_content_by_attr(const QString &attr)
+{
+    QStringList list = attr.split("|");
+    if (list.count() < 2)
+        return;
+
+    bool isClCompile = list.at(0) == "ClCompile";
+    std::string sub_attr = list.at(1).toLocal8Bit().toStdString();
+
+    std::string condition =
+        get_condition(m_curr_conf.configuration, m_curr_conf.platform);
+    /* value from props file */
+    std::string value =
+        m_data.get_attr_by_name(sub_attr, condition, isClCompile);
+
+    QString text = std2qstring(value);
+    QString cache;
+
+    if (m_attr_cache.contains(attr))
+    {
+        cache = m_attr_cache.value(attr);
+    }
+
+    if (cache.isEmpty())
+    {
+        cache = text;
+    }
+
+    /* single line */
+    ui->original_text->setText(text);
+
+    if (m_curr_view != attribute_table_view::RAW ||
+        ui->alter_text->toPlainText().isEmpty())
+    {
+        ui->alter_text->blockSignals(true);
+        ui->alter_text->setText(cache);
+        ui->alter_text->blockSignals(false);
+    }
+
+    /* multi lines */
+
+    if (sub_attr != "AdditionalOptions")
+    {
+        /* if attr not AdditionalOptions, then split by ';' */
+        text = text.replace(";", "\n");
+        cache = cache.replace(";", "\n");
+    }
+    else
+    {
+        /* if attr is AdditionalOptions, then split by ' ' */
+        text = text.replace(" ", "\n");
+        cache = cache.replace(" ", "\n");
+    }
+
+    ui->original_muti_lines_text->setText(text);
+
+    if (m_curr_view != attribute_table_view::MUTI_LINES ||
+        ui->alter_muti_lines_text->toPlainText().isEmpty())
+    {
+        ui->alter_muti_lines_text->blockSignals(true);
+        ui->alter_muti_lines_text->setText(cache);
+        ui->alter_muti_lines_text->blockSignals(false);
+    }
 }

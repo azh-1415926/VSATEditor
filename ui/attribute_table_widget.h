@@ -93,6 +93,7 @@ class attribute_table_widget : public QWidget
     void refresh();
 
     void switch_view();
+    void update_view_content_by_attr(const QString& attr);
 };
 
 /* std::string convert to QString */
