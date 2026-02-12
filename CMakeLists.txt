@@ -32,9 +32,10 @@ if(MSVC)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif()
 
-find_package(spdlog REQUIRED)
-find_package(pugixml REQUIRED)
-find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(pugixml QUIET)
+if(NOT pugixml_FOUND)
+    add_subdirectory(3rdparty/pugixml)
+endif()
 
 file(GLOB_RECURSE incs ${CMAKE_SOURCE_DIR}/include/*.h*)
 file(GLOB_RECURSE srcs ${CMAKE_SOURCE_DIR}/src/*.c*)
@@ -45,9 +46,7 @@ include_directories(
 
 add_library(ExternalLib ${incs} ${srcs})
 target_link_libraries(ExternalLib PUBLIC
-    spdlog::spdlog
     pugixml::pugixml
-    Boost::program_options
 )
 
 target_include_directories(ExternalLib PUBLIC

@@ -1,5 +1,5 @@
 #include "azh/props.h"
-#include "azh/logger.h"
+#include "azh/utils/logger.hpp"
 
 props::props(int preset)
 {
@@ -25,8 +25,8 @@ props::props(const std::string &xml_path, int preset): m_xml_path(xml_path)
 
     if (!result)
     {
-        azh::logger(azh::LOGGER_LEVEL::LOG_WARNNING) << "Load xml file error : " << result.description();
-        azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Try to init a empty xml.";
+        aDebug(AZH_WARNING) << "Load xml file error : " << result.description();
+        aDebug(AZH_INFO) << "Try to init a empty xml.";
 
         if(preset==0)
         {
@@ -49,13 +49,13 @@ void props::save()
 {
     if(m_xml_path.empty())
     {
-        azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Save - empty xml path, not set default save path.";
+        aDebug(AZH_ERROR) << "Save - empty xml path, not set default save path.";
         return;
     }
 
     if(!std::filesystem::exists(std::filesystem::path(m_xml_path).parent_path()))
     {
-        azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Save - invalid save path : "<<m_xml_path;
+        aDebug(AZH_ERROR) << "Save - invalid save path : "<<m_xml_path;
         return;
     }
 
@@ -67,15 +67,15 @@ void props::save(const std::string &xml_path)
 {
     if (m_doc.save_file(xml_path.c_str()))
     {
-        azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Save to " << std::filesystem::absolute(xml_path) << ".";
+        aDebug(AZH_INFO) << "Save to " << std::filesystem::absolute(xml_path) << ".";
 
-        azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Content:";
+        aDebug(AZH_INFO) << "Content:";
         m_doc.save(std::cout);
         this->m_xml_path=xml_path;
     }
     else
     {
-        azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Save xml file error.";
+        aDebug(AZH_ERROR) << "Save xml file error.";
     }
 }
 
@@ -84,7 +84,7 @@ bool props::check()
     pugi::xml_node project = m_doc.child("Project");
     if (project.empty())
     {
-        azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Check - can not find 'Project' node.";
+        aDebug(AZH_ERROR) << "Check - can not find 'Project' node.";
         return false;
     }
 
@@ -99,7 +99,7 @@ bool props::check()
         }
     }
 
-    azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Check - can not find ClCompile/Link in 'ItemDefinitionGroup'.";
+    aDebug(AZH_ERROR) << "Check - can not find ClCompile/Link in 'ItemDefinitionGroup'.";
 
     return false;
 }
@@ -178,7 +178,7 @@ int props::add_property_sheet(const std::string &props_file)
         return 0;
     }
 
-    azh::logger(azh::LOGGER_LEVEL::LOG_ERROR) << "Error in add_property_sheet.";
+    aDebug(AZH_ERROR) << "Error in add_property_sheet.";
 
     return -1;
 }
@@ -515,38 +515,38 @@ bool props::create_item_group(const attribute_table_config &conf)
 
 void props::print_content()
 {
-    azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "==============================================================";
-    azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Print xml content :";
+    aDebug(AZH_INFO) << "==============================================================";
+    aDebug(AZH_INFO) << "Print xml content :";
     pugi::xml_node project = m_doc.child("Project");
 
     // 解析所有 ItemDefinitionGroup
     for (pugi::xml_node group : project.children("ItemDefinitionGroup"))
     {
-        azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "--------------------------------------------------------------";
+        aDebug(AZH_INFO) << "--------------------------------------------------------------";
         std::string condition = group.attribute("Condition").value();
-        azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Codition : " << condition;
+        aDebug(AZH_INFO) << "Codition : " << condition;
 
         // 解析 ClCompile 设置
         pugi::xml_node clCompile = group.child("ClCompile");
         if (clCompile)
         {
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "ClCompile :";
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "  - WarningLevel: " << clCompile.child("WarningLevel").text().get();
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "  - SDLCheck: " << clCompile.child("SDLCheck").text().get();
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "  - PreprocessorDefinitions: " << clCompile.child("PreprocessorDefinitions").text().get();
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "  - AdditionalIncludeDirectories: " << clCompile.child("AdditionalIncludeDirectories").text().get();
+            aDebug(AZH_INFO) << "ClCompile :";
+            aDebug(AZH_INFO) << "  - WarningLevel: " << clCompile.child("WarningLevel").text().get();
+            aDebug(AZH_INFO) << "  - SDLCheck: " << clCompile.child("SDLCheck").text().get();
+            aDebug(AZH_INFO) << "  - PreprocessorDefinitions: " << clCompile.child("PreprocessorDefinitions").text().get();
+            aDebug(AZH_INFO) << "  - AdditionalIncludeDirectories: " << clCompile.child("AdditionalIncludeDirectories").text().get();
         }
 
         // 解析 Link 设置
         pugi::xml_node link = group.child("Link");
         if (link)
         {
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "Link :";
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "  - SubSystem: " << link.child("SubSystem").text().get();
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "  - AdditionalLibraryDirectories: " << link.child("AdditionalLibraryDirectories").text().get();
-            azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "  - AdditionalDependencies: " << link.child("AdditionalDependencies").text().get();
+            aDebug(AZH_INFO) << "Link :";
+            aDebug(AZH_INFO) << "  - SubSystem: " << link.child("SubSystem").text().get();
+            aDebug(AZH_INFO) << "  - AdditionalLibraryDirectories: " << link.child("AdditionalLibraryDirectories").text().get();
+            aDebug(AZH_INFO) << "  - AdditionalDependencies: " << link.child("AdditionalDependencies").text().get();
         }
     }
 
-    azh::logger(azh::LOGGER_LEVEL::LOG_INFO) << "--------------------------------------------------------------";
+    aDebug(AZH_INFO) << "--------------------------------------------------------------";
 }

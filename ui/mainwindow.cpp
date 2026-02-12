@@ -11,6 +11,7 @@
 #include <QUrl>
 #include <QInputDialog>
 
+#include "azh/utils/logger.hpp"
 #include "azh/version.hpp"
 #include "azh/props.h"
 #include "attribute_table_widget.h"
@@ -38,7 +39,7 @@ void MainWindow::props_editor_rename(attribute_table_widget* w,const QString& na
     }
     else
     {
-        qDebug() << "The widget not found in tab widget.";
+        aDebug(AZH_INFO) << "The widget not found in tab widget.";
     }
 }
 
@@ -201,7 +202,7 @@ void MainWindow::init()
         }
         else
         {
-            qDebug() << "The widget not found in tab widget.";
+            aDebug(AZH_INFO) << "The widget not found in tab widget.";
         }
         
     });
