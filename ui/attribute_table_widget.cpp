@@ -443,7 +443,7 @@ void attribute_table_widget::init_action()
     });
 
     /* switch view action */
-    connect(ui->view_combo, &QComboBox::currentIndexChanged, this, [=](int i) {
+    connect(ui->view_combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=](int i) {
         switch (i)
         {
         case 0:
