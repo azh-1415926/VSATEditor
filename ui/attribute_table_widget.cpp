@@ -671,6 +671,7 @@ QStringList attribute_table_widget::getExistingDirectories(const QString &title,
     QStringList folders;
 
     QFileDialog fileDlg(this, title, path);
+    fileDlg.setFileMode(QFileDialog::Directory);
     fileDlg.setOption(QFileDialog::DontUseNativeDialog, true);
     QListView *listView = fileDlg.findChild<QListView *>("listView");
     if (listView)
