@@ -1,26 +1,25 @@
 #pragma once
 
-#include <iostream>
-#include <fstream>
 #include <ctime>
-#include <vector>
-#include <string>
-#include <sstream>
+#include <fstream>
+#include <iostream>
 #include <mutex>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace azh::utils
 {
-    template <typename _type>
-    struct _has_to_string
+    template <typename _type> struct _has_to_string
     {
-    private:
+      private:
         template <typename U>
-        static auto test(int) -> decltype(std::declval<U>().toString(), std::true_type{});
+        static auto test(int)
+            -> decltype(std::declval<U>().toString(), std::true_type{});
 
-        template <typename>
-        static std::false_type test(...);
+        template <typename> static std::false_type test(...);
 
-    public:
+      public:
         static constexpr bool value = decltype(test<_type>(0))::value;
     };
 
@@ -30,7 +29,8 @@ namespace azh::utils
     };
 
     template <typename _type>
-    inline typename std::enable_if<!_has_to_string<_type>::value, std::string>::type
+    inline typename std::enable_if<!_has_to_string<_type>::value,
+                                   std::string>::type
     to_string(const _type &t)
     {
         std::stringstream ss;
@@ -51,8 +51,9 @@ namespace azh::utils
     }
 
     template <typename _type>
-    inline typename std::enable_if<_has_to_string<_type>::value, std::string>::type
-    to_string(const _type &t)
+    inline
+        typename std::enable_if<_has_to_string<_type>::value, std::string>::type
+        to_string(const _type &t)
     {
         std::ostringstream oss;
         // oss << typeid(t).name();
@@ -60,7 +61,10 @@ namespace azh::utils
         return oss.str();
     }
 
-    inline std::string get_current_time(const std::string &year_month_day = "", const char delimiter = '_', const std::string &hour_minute_second = "")
+    inline std::string
+    get_current_time(const std::string &year_month_day = "",
+                     const char delimiter = '_',
+                     const std::string &hour_minute_second = "")
     {
         time_t now;
         time(&now);
@@ -71,7 +75,8 @@ namespace azh::utils
 
         if (year_month_day.size() > 0)
             str += year_month_day[0];
-        str += std::to_string((p.tm_mon + 1) / 10) + std::to_string((p.tm_mon + 1) % 10);
+        str += std::to_string((p.tm_mon + 1) / 10) +
+               std::to_string((p.tm_mon + 1) % 10);
         if (year_month_day.size() > 1)
             str += year_month_day[1];
         str += std::to_string(p.tm_mday / 10) + std::to_string(p.tm_mday % 10);
@@ -87,7 +92,8 @@ namespace azh::utils
         return str;
     }
 
-    inline bool str_has_same_prefix(const std::string &s1, const std::string &s2, char delimiter)
+    inline bool str_has_same_prefix(const std::string &s1,
+                                    const std::string &s2, char delimiter)
     {
         int i1 = s1.find_first_of(delimiter);
         int i2 = s2.find_first_of(delimiter);
@@ -108,39 +114,40 @@ namespace azh::utils
         return true;
     }
 
-#define REGISTER_LOGGER_TYPE(L_TYPE, MSG)                                                                        \
-    template <typename T, typename... Args>                                                                      \
-    void L_TYPE(const T &t, const Args &...args)                                                                 \
-    {                                                                                                            \
-        m_logger_mutex_private.lock();                                                                           \
-        m_out_private << "[ ";                                                                                   \
-        m_out_private << get_current_time("--", ' ', "::");                                                      \
-        m_out_private << " ]";                                                                                   \
-        m_out_private << MSG;                                                                                    \
-        print(t, args...);                                                                                       \
-        m_out_private << std::flush;                                                                             \
-        m_logger_mutex_private.unlock();                                                                         \
-    }                                                                                                            \
-    void L_TYPE(const std::vector<std::string> &logs, bool to_print_header = true, bool to_print_newline = true) \
-    {                                                                                                            \
-        m_logger_mutex_private.lock();                                                                           \
-        if (to_print_header)                                                                                     \
-        {                                                                                                        \
-            m_out_private << "[ ";                                                                               \
-            m_out_private << get_current_time("--", ' ', "::");                                                  \
-            m_out_private << " ]";                                                                               \
-            m_out_private << MSG;                                                                                \
-        }                                                                                                        \
-        for (auto i : logs)                                                                                      \
-        {                                                                                                        \
-            m_out_private << i;                                                                                  \
-        }                                                                                                        \
-        if (to_print_newline)                                                                                    \
-        {                                                                                                        \
-            m_out_private << "\n";                                                                               \
-        }                                                                                                        \
-        m_out_private << std::flush;                                                                             \
-        m_logger_mutex_private.unlock();                                                                         \
+#define REGISTER_LOGGER_TYPE(L_TYPE, MSG)                                      \
+    template <typename T, typename... Args>                                    \
+    void L_TYPE(const T &t, const Args &...args)                               \
+    {                                                                          \
+        m_logger_mutex_private.lock();                                         \
+        m_out_private << "[ ";                                                 \
+        m_out_private << get_current_time("--", ' ', "::");                    \
+        m_out_private << " ]";                                                 \
+        m_out_private << MSG;                                                  \
+        print(t, args...);                                                     \
+        m_out_private << std::flush;                                           \
+        m_logger_mutex_private.unlock();                                       \
+    }                                                                          \
+    void L_TYPE(const std::vector<std::string> &logs,                          \
+                bool to_print_header = true, bool to_print_newline = true)     \
+    {                                                                          \
+        m_logger_mutex_private.lock();                                         \
+        if (to_print_header)                                                   \
+        {                                                                      \
+            m_out_private << "[ ";                                             \
+            m_out_private << get_current_time("--", ' ', "::");                \
+            m_out_private << " ]";                                             \
+            m_out_private << MSG;                                              \
+        }                                                                      \
+        for (auto i : logs)                                                    \
+        {                                                                      \
+            m_out_private << i;                                                \
+        }                                                                      \
+        if (to_print_newline)                                                  \
+        {                                                                      \
+            m_out_private << "\n";                                             \
+        }                                                                      \
+        m_out_private << std::flush;                                           \
+        m_logger_mutex_private.unlock();                                       \
     }
 
     class _logger
@@ -156,18 +163,25 @@ namespace azh::utils
         /* use stdout */
         bool m_used_stdout_private;
 
-    public:
+      public:
         _logger() : m_out_private(std::cout), m_used_stdout_private(true) {}
-        _logger(const std::string &out_file) : m_out_private(m_logfile_stream_private), m_used_stdout_private(false)
+        _logger(const std::string &out_file)
+            : m_out_private(m_logfile_stream_private),
+              m_used_stdout_private(false)
         {
             m_logfile_stream_private.open(out_file, std::ios::out);
         }
 
-        _logger(const _logger &l) : m_out_private(l.m_used_stdout_private ? std::cout : m_logfile_stream_private), m_log_filepath_private(l.m_log_filepath_private), m_used_stdout_private(l.m_used_stdout_private)
+        _logger(const _logger &l)
+            : m_out_private(l.m_used_stdout_private ? std::cout
+                                                    : m_logfile_stream_private),
+              m_log_filepath_private(l.m_log_filepath_private),
+              m_used_stdout_private(l.m_used_stdout_private)
         {
             if (l.m_logfile_stream_private.is_open())
             {
-                m_logfile_stream_private.open(m_log_filepath_private, std::ios::out);
+                m_logfile_stream_private.open(m_log_filepath_private,
+                                              std::ios::out);
             }
         }
 
@@ -183,7 +197,9 @@ namespace azh::utils
         {
             if (m_used_stdout_private)
             {
-                this->error("Current logger print to stdout, can not open file : ", filepath);
+                this->error(
+                    "Current logger print to stdout, can not open file : ",
+                    filepath);
                 return;
             }
 
@@ -200,8 +216,7 @@ namespace azh::utils
             m_logfile_stream_private.open(m_log_filepath_private);
         }
 
-        template <typename T, typename... Args>
-        void print(const T &t)
+        template <typename T, typename... Args> void print(const T &t)
         {
             m_out_private << t << "\n";
         }
@@ -215,8 +230,7 @@ namespace azh::utils
 
         _logger &operator=(const _logger &l) = delete;
 
-        template <typename T>
-        _logger &operator<<(const T &t)
+        template <typename T> _logger &operator<<(const T &t)
         {
             m_logger_mutex_private.lock();
 
@@ -237,10 +251,10 @@ namespace azh::utils
 
     class logger
     {
-    private:
+      private:
         logger() {}
 
-    public:
+      public:
         static _logger *getInstance()
         {
             static logger l;
@@ -259,7 +273,7 @@ namespace azh::utils
             return l.getLoggerSingleInstance(log_name);
         }
 
-    private:
+      private:
         _logger *getLoggerSingleInstance()
         {
             static _logger logger;
@@ -268,18 +282,19 @@ namespace azh::utils
 
         _logger *getLoggerSingleInstance(const std::string &log_name)
         {
-            std::string log_filepath = log_name + "-" + get_current_time() + ".log";
+            std::string log_filepath =
+                log_name + "-" + get_current_time() + ".log";
             static _logger logger(log_filepath);
             logger.open(log_filepath);
             return &logger;
         }
     };
 
-#define REGISTER_LOGGER_WRAPPER_PRINT_TYPE(type) \
-    logger_wrapper &operator<<(const type &t)    \
-    {                                            \
-        *m_logger_private << t;                  \
-        return *this;                            \
+#define REGISTER_LOGGER_WRAPPER_PRINT_TYPE(type)                               \
+    logger_wrapper &operator<<(const type &t)                                  \
+    {                                                                          \
+        *m_logger_private << t;                                                \
+        return *this;                                                          \
     }
 
     class logger_wrapper
@@ -290,8 +305,14 @@ namespace azh::utils
         bool m_to_print_newline_private;
         std::vector<std::string> m_contents_private;
 
-    public:
-        explicit logger_wrapper(size_t type = 0, const std::string &log_name = "", bool to_print_header = false, bool to_print_newline = true) : m_logger_private(nullptr), m_print_type_private(type), m_to_print_header_private(to_print_header), m_to_print_newline_private(to_print_newline)
+      public:
+        explicit logger_wrapper(size_t type = 0,
+                                const std::string &log_name = "",
+                                bool to_print_header = false,
+                                bool to_print_newline = true)
+            : m_logger_private(nullptr), m_print_type_private(type),
+              m_to_print_header_private(to_print_header),
+              m_to_print_newline_private(to_print_newline)
         {
             if (log_name.empty())
                 m_logger_private = logger::getInstance();
@@ -303,23 +324,33 @@ namespace azh::utils
             switch (m_print_type_private)
             {
             case 0:
-                m_logger_private->debug(m_contents_private, m_to_print_header_private, m_to_print_newline_private);
+                m_logger_private->debug(m_contents_private,
+                                        m_to_print_header_private,
+                                        m_to_print_newline_private);
                 break;
 
             case 1:
-                m_logger_private->info(m_contents_private, m_to_print_header_private, m_to_print_newline_private);
+                m_logger_private->info(m_contents_private,
+                                       m_to_print_header_private,
+                                       m_to_print_newline_private);
                 break;
 
             case 2:
-                m_logger_private->warning(m_contents_private, m_to_print_header_private, m_to_print_newline_private);
+                m_logger_private->warning(m_contents_private,
+                                          m_to_print_header_private,
+                                          m_to_print_newline_private);
                 break;
 
             case 3:
-                m_logger_private->error(m_contents_private, m_to_print_header_private, m_to_print_newline_private);
+                m_logger_private->error(m_contents_private,
+                                        m_to_print_header_private,
+                                        m_to_print_newline_private);
                 break;
 
             case 4:
-                m_logger_private->fatal(m_contents_private, m_to_print_header_private, m_to_print_newline_private);
+                m_logger_private->fatal(m_contents_private,
+                                        m_to_print_header_private,
+                                        m_to_print_newline_private);
                 break;
 
             default:
@@ -330,14 +361,13 @@ namespace azh::utils
         logger_wrapper(const logger_wrapper &l) = delete;
         logger_wrapper &operator=(const logger_wrapper &l) = delete;
 
-        template <class _type>
-        logger_wrapper &operator<<(const _type &t)
+        template <class _type> logger_wrapper &operator<<(const _type &t)
         {
             m_contents_private.push_back(to_string(t));
             return *this;
         }
     };
-}
+} // namespace azh::utils
 
 using aDebug = azh::utils::logger_wrapper;
 

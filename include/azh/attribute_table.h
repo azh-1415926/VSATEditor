@@ -83,7 +83,8 @@ struct attribute_table_config
     }
 };
 
-inline std::string get_condition(const configuration_type& configuration,const platform_type& platform)
+inline std::string get_condition(const configuration_type &configuration,
+                                 const platform_type &platform)
 {
     std::string condition;
 
@@ -121,7 +122,9 @@ inline std::string get_condition(const configuration_type& configuration,const p
 }
 
 /* combine [1,2,3], to ";1;2;3" */
-inline std::string combine_attribute_value(const std::vector<std::string> &values, const std::string &delimiter = ";")
+inline std::string
+combine_attribute_value(const std::vector<std::string> &values,
+                        const std::string &delimiter = ";")
 {
     std::string str;
 
@@ -134,7 +137,8 @@ inline std::string combine_attribute_value(const std::vector<std::string> &value
     return str;
 }
 
-inline std::string get_user_props_name_by_platform(const platform_type& platform)
+inline std::string
+get_user_props_name_by_platform(const platform_type &platform)
 {
     std::string _platform;
 
@@ -153,5 +157,5 @@ inline std::string get_user_props_name_by_platform(const platform_type& platform
         break;
     }
 
-    return "Microsoft.Cpp."+_platform+".user.props";
+    return "Microsoft.Cpp." + _platform + ".user.props";
 }

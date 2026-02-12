@@ -4,8 +4,9 @@
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 QT_END_NAMESPACE
 
@@ -16,21 +17,21 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:
+  public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-public slots:
-    void props_editor_rename(attribute_table_widget*,const QString& name);
+  public slots:
+    void props_editor_rename(attribute_table_widget *, const QString &name);
     void new_attribute_table_wdiget();
-    void new_attribute_table_wdiget_by_props(const props& p);
+    void new_attribute_table_wdiget_by_props(const props &p);
     void remove_attribute_table_widget();
 
-signals:
-    void add_props_editor(attribute_table_widget*,const props&);
-    void remove_props_editor(attribute_table_widget*);
+  signals:
+    void add_props_editor(attribute_table_widget *, const props &);
+    void remove_props_editor(attribute_table_widget *);
 
-private:
+  private:
     Ui::MainWindow *ui;
 
     void init();

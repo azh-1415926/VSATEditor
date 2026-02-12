@@ -14,9 +14,8 @@ namespace azh::utils
             }
         }
         catch (const std::filesystem::filesystem_error &e)
-        {
-        }
+        {}
 
         return false;
     }
-}
+} // namespace azh::utils

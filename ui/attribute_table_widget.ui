@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>477</width>
+    <width>489</width>
     <height>300</height>
    </rect>
   </property>
@@ -36,6 +36,16 @@
      <item>
       <widget class="QComboBox" name="platform_combo"/>
      </item>
+     <item>
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>视图(V):</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="view_combo"/>
+     </item>
     </layout>
    </item>
    <item>
@@ -50,7 +60,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>127</width>
+          <width>130</width>
           <height>218</height>
          </rect>
         </property>
@@ -72,7 +82,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>303</width>
+          <width>312</width>
           <height>226</height>
          </rect>
         </property>
@@ -165,13 +175,6 @@
       <widget class="QPushButton" name="add_path_btn">
        <property name="text">
         <string>添加附加目录/附加依赖项</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="view_btn">
-       <property name="text">
-        <string>切换视图</string>
        </property>
       </widget>
      </item>
