@@ -93,7 +93,9 @@ class attribute_table_widget : public QWidget
     void refresh();
 
     void switch_view();
-    void update_view_content_by_attr(const QString& attr);
+    void update_view_content_by_attr(const QString &attr);
+    QStringList getExistingDirectories(const QString &title,
+                                       const QString &path);
 };
 
 /* std::string convert to QString */

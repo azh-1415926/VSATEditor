@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QTreeView>
 #include <filesystem>
 
 #include "./ui_attribute_table_widget.h"
@@ -362,8 +363,8 @@ void attribute_table_widget::init_action()
         auto items = ui->attrs->selectedItems();
         if (items.empty())
         {
-            QMessageBox::warning(this, "add directories/dependencies path",
-                                 "未选择任何属性，无法添加");
+            QMessageBox::warning(this, "添加附加目录/附加依赖项",
+                                 "请在左侧选择附加目录或附加依赖项属性");
             return;
         }
 
@@ -381,43 +382,62 @@ void attribute_table_widget::init_action()
         if (attr == "ClCompile|AdditionalIncludeDirectories" ||
             attr == "Link|AdditionalLibraryDirectories")
         {
-            QString dir_path = QFileDialog::getExistingDirectory(
-                this, "add directories/dependencies path", QDir::currentPath());
-            if (dir_path.isEmpty())
+
+            QStringList incs_path = getExistingDirectories(
+                "选择文件夹路径(可多选)", QDir::currentPath());
+            if (incs_path.isEmpty())
             {
-                QMessageBox::warning(this, "add directories/dependencies path",
+                QMessageBox::warning(this, "选择附加目录",
                                      "未选择附加目录/附加依赖项");
                 return;
             }
 
             if (ui->alter_text->toPlainText().isEmpty())
-                ui->alter_text->setText(dir_path);
+            {
+                ui->alter_text->setText(incs_path.join(";"));
+            }
             else
+            {
                 ui->alter_text->setText(ui->alter_text->toPlainText() + ";" +
-                                        dir_path);
+                                        incs_path.join(";"));
+            }
         }
         else if (attr == "Link|AdditionalDependencies")
         {
-            QString libs_path = QFileDialog::getOpenFileNames(
-                                    this, "add directories/dependencies path",
-                                    QDir::currentPath(), "*.lib")
-                                    .join(";");
+            QStringList libs_path = QFileDialog::getOpenFileNames(
+                this, "选择库文件(可多选)", QDir::currentPath(), "*.lib");
             if (libs_path.isEmpty())
             {
-                QMessageBox::warning(this, "add directories/dependencies path",
+                QMessageBox::warning(this, "选择附加依赖项",
                                      "未选择附加目录/附加依赖项");
                 return;
             }
 
+            int ret = QMessageBox::question(
+                this, "添加附加依赖项", "是否选取库的绝对路径, 否则取库文件名",
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
+            if (ret == QMessageBox::No)
+            {
+                for (auto &lib_path : libs_path)
+                {
+                    QStringList list = lib_path.split("/");
+                    if (!list.isEmpty())
+                    {
+                        lib_path = list.at(list.size() - 1);
+                    }
+                }
+            }
+
             if (ui->alter_text->toPlainText().isEmpty())
-                ui->alter_text->setText(libs_path);
+                ui->alter_text->setText(libs_path.join(";"));
             else
                 ui->alter_text->setText(ui->alter_text->toPlainText() + ";" +
-                                        libs_path);
+                                        libs_path.join(";"));
         }
         else
         {
-            QMessageBox::warning(this, "add directories/dependencies path",
+            QMessageBox::warning(this, "添加附加目录/附加依赖项",
                                  "该属性无需添加附加目录/附加依赖项");
         }
     });
@@ -643,4 +663,25 @@ void attribute_table_widget::update_view_content_by_attr(const QString &attr)
         ui->alter_muti_lines_text->setText(cache);
         ui->alter_muti_lines_text->blockSignals(false);
     }
+}
+
+QStringList attribute_table_widget::getExistingDirectories(const QString &title,
+                                                           const QString &path)
+{
+    QStringList folders;
+
+    QFileDialog fileDlg(this, title, path);
+    fileDlg.setOption(QFileDialog::DontUseNativeDialog, true);
+    QListView *listView = fileDlg.findChild<QListView *>("listView");
+    if (listView)
+        listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    QTreeView *treeView = fileDlg.findChild<QTreeView *>();
+    if (treeView)
+        treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    if (fileDlg.exec())
+    {
+        folders = fileDlg.selectedFiles();
+    }
+
+    return folders;
 }
