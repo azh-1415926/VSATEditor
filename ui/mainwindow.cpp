@@ -15,9 +15,12 @@
 #include "azh/props.h"
 #include "azh/utils/logger.hpp"
 #include "azh/version.hpp"
+#include "file_selector_dialog.h"
+#include "library_auto_scan_widget.h"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow)
+    : QMainWindow(parent), ui(new Ui::MainWindow),
+      m_library_scanner(new library_auto_scan_widget)
 {
     ui->setupUi(this);
 
@@ -60,6 +63,67 @@ void MainWindow::new_attribute_table_wdiget_by_props(const props &p)
     emit add_props_editor(w, p);
 }
 
+void MainWindow::new_attribute_table_wdiget_by_scanner()
+{
+    std::string incPaths =
+        m_library_scanner->get_inc_paths().join(";").toStdString();
+    std::string libPaths =
+        m_library_scanner->get_lib_paths().join(";").toStdString();
+
+    std::string libNames =
+        m_library_scanner->get_lib_names().join(";").toStdString();
+
+    props p;
+
+    if (m_library_scanner->get_platform() == "x64")
+    {
+        p.set_attr("AdditionalIncludeDirectories", incPaths,
+                   props_attr_preset::DEBUG_WIN64_CLCOMPILE);
+        p.set_attr("AdditionalIncludeDirectories", incPaths,
+                   props_attr_preset::RELEASE_WIN64_CLCOMPILE);
+
+        p.set_attr("AdditionalLibraryDirectories", libPaths,
+                   props_attr_preset::DEBUG_WIN64_LINK);
+        p.set_attr("AdditionalLibraryDirectories", libPaths,
+                   props_attr_preset::RELEASE_WIN64_LINK);
+
+        p.set_attr("AdditionalDependencies", libNames,
+                   props_attr_preset::DEBUG_WIN64_LINK);
+        p.set_attr("AdditionalDependencies", libNames,
+                   props_attr_preset::RELEASE_WIN64_LINK);
+    }
+    else if (m_library_scanner->get_platform() == "x86")
+    {
+        p.set_attr("AdditionalIncludeDirectories", incPaths,
+                   props_attr_preset::DEBUG_WIN32_CLCOMPILE);
+        p.set_attr("AdditionalIncludeDirectories", incPaths,
+                   props_attr_preset::RELEASE_WIN32_CLCOMPILE);
+
+        p.set_attr("AdditionalLibraryDirectories", libPaths,
+                   props_attr_preset::DEBUG_WIN32_LINK);
+        p.set_attr("AdditionalLibraryDirectories", libPaths,
+                   props_attr_preset::RELEASE_WIN32_LINK);
+
+        p.set_attr("AdditionalDependencies", libNames,
+                   props_attr_preset::DEBUG_WIN32_LINK);
+        p.set_attr("AdditionalDependencies", libNames,
+                   props_attr_preset::RELEASE_WIN32_LINK);
+    }
+    else
+    {
+        return;
+    }
+
+    new_attribute_table_wdiget_by_props(p);
+
+    attribute_table_widget *w = static_cast<attribute_table_widget *>(
+        ui->props_editors->currentWidget());
+
+    w->set_edit_state(true);
+
+    m_library_scanner->clear();
+}
+
 void MainWindow::remove_attribute_table_widget()
 {
     int n = ui->props_editors->count();
@@ -76,6 +140,15 @@ void MainWindow::remove_attribute_table_widget()
                            "已经是最后一个属性表，已为您执行清空操作");
     }
 }
+
+void MainWindow::open_multi_function_selector()
+{
+    file_selector_dialog dlg;
+    dlg.resize(600, 400);
+    dlg.exec();
+}
+
+void MainWindow::open_library_auto_scanner() { m_library_scanner->show(); }
 
 void MainWindow::init()
 {
@@ -425,6 +498,12 @@ void MainWindow::init()
         }
     });
 
+    connect(ui->multi_function_selector_action, &QAction::triggered, this,
+            &MainWindow::open_multi_function_selector);
+
+    connect(ui->scan_lib_action, &QAction::triggered, this,
+            &MainWindow::open_library_auto_scanner);
+
     /* links */
     connect(ui->links_action, &QAction::triggered, this, [=]() {
         QMessageBox box(this);
@@ -567,4 +646,8 @@ void MainWindow::init()
             [=]() { QMessageBox::aboutQt(this); });
 
     new_attribute_table_wdiget();
+
+    m_library_scanner->setWindowIcon(QIcon(":/res/atrribute_table.png"));
+    connect(m_library_scanner, &library_auto_scan_widget::scanned, this,
+            &MainWindow::new_attribute_table_wdiget_by_scanner);
 }

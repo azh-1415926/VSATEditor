@@ -94,8 +94,16 @@
     <addaction name="menucmake"/>
     <addaction name="help_action"/>
    </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>工具</string>
+    </property>
+    <addaction name="multi_function_selector_action"/>
+    <addaction name="scan_lib_action"/>
+   </widget>
    <addaction name="file_menu"/>
    <addaction name="props_menu"/>
+   <addaction name="menu_3"/>
    <addaction name="menu"/>
    <addaction name="other_menu"/>
   </widget>
@@ -198,6 +206,16 @@
   <action name="qt_cmake_template_action">
    <property name="text">
     <string>Qt</string>
+   </property>
+  </action>
+  <action name="multi_function_selector_action">
+   <property name="text">
+    <string>辅助选择框</string>
+   </property>
+  </action>
+  <action name="scan_lib_action">
+   <property name="text">
+    <string>扫描常见库</string>
    </property>
   </action>
  </widget>

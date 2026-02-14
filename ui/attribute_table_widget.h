@@ -44,12 +44,12 @@ class attribute_table_widget : public QWidget
     bool is_edit() { return m_state == attribute_table_status::NO_SAVE; }
     void set_edit_state(bool is_edit)
     {
-        if (is_edit && is_load())
+        if (is_edit)
         {
             m_state = attribute_table_status::NO_SAVE;
             emit rename(this, m_name + " [*]");
         }
-        else if (!is_edit && is_load())
+        else
         {
             m_state = attribute_table_status::NO_EDIT;
             emit rename(this, m_name);
@@ -94,8 +94,6 @@ class attribute_table_widget : public QWidget
 
     void switch_view();
     void update_view_content_by_attr(const QString &attr);
-    QStringList getExistingDirectories(const QString &title,
-                                       const QString &path);
 };
 
 /* std::string convert to QString */

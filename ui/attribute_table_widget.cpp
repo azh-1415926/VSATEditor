@@ -9,6 +9,8 @@
 #include "./ui_attribute_table_widget.h"
 #include "azh/props.h"
 
+#include "file_selector_dialog.h"
+
 /* list editable attributes by default */
 static QList<QPair<QString, QString>> default_attributes = {
     QPair<QString, QString>("C/C++ 预处理宏定义",
@@ -382,8 +384,8 @@ void attribute_table_widget::init_action()
         if (attr == "ClCompile|AdditionalIncludeDirectories" ||
             attr == "Link|AdditionalLibraryDirectories")
         {
-
-            QStringList incs_path = getExistingDirectories(
+            file_selector_dialog dlg;
+            QStringList incs_path = dlg.getExistingDirectories(
                 "选择文件夹路径(可多选)", QDir::currentPath());
             if (incs_path.isEmpty())
             {
@@ -443,24 +445,25 @@ void attribute_table_widget::init_action()
     });
 
     /* switch view action */
-    connect(ui->view_combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=](int i) {
-        switch (i)
-        {
-        case 0:
-            m_curr_view = attribute_table_view::RAW;
-            break;
+    connect(ui->view_combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [=](int i) {
+                switch (i)
+                {
+                case 0:
+                    m_curr_view = attribute_table_view::RAW;
+                    break;
 
-        case 1:
-            m_curr_view = attribute_table_view::MUTI_LINES;
-            break;
+                case 1:
+                    m_curr_view = attribute_table_view::MUTI_LINES;
+                    break;
 
-        default:
-            m_curr_view = attribute_table_view::RAW;
-            break;
-        }
+                default:
+                    m_curr_view = attribute_table_view::RAW;
+                    break;
+                }
 
-        switch_view();
-    });
+                switch_view();
+            });
 }
 
 void attribute_table_widget::init_conf()
@@ -663,26 +666,4 @@ void attribute_table_widget::update_view_content_by_attr(const QString &attr)
         ui->alter_muti_lines_text->setText(cache);
         ui->alter_muti_lines_text->blockSignals(false);
     }
-}
-
-QStringList attribute_table_widget::getExistingDirectories(const QString &title,
-                                                           const QString &path)
-{
-    QStringList folders;
-
-    QFileDialog fileDlg(this, title, path);
-    fileDlg.setFileMode(QFileDialog::Directory);
-    fileDlg.setOption(QFileDialog::DontUseNativeDialog, true);
-    QListView *listView = fileDlg.findChild<QListView *>("listView");
-    if (listView)
-        listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    QTreeView *treeView = fileDlg.findChild<QTreeView *>();
-    if (treeView)
-        treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    if (fileDlg.exec())
-    {
-        folders = fileDlg.selectedFiles();
-    }
-
-    return folders;
 }
