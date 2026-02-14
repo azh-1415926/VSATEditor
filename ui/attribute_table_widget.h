@@ -6,6 +6,8 @@
 
 #include "azh/props.h"
 
+class QListWidgetItem;
+
 QT_BEGIN_NAMESPACE
 namespace Ui
 {
@@ -64,6 +66,17 @@ class attribute_table_widget : public QWidget
     void save(bool silence = false);
     void save_as(const QString &file_path, bool to_rename = true);
 
+    
+    void attr_item_clicked(QListWidgetItem *item);
+    void configuration_changed(const QString &conf);
+    void platform_changed(const QString &platform);
+    void single_editor_text_changed();
+    void multi_editor_text_changed();
+
+    void exit_without_saving();
+    void save_as_btn_clicked();
+    void add_path_btn_clicked();
+
   signals:
     void rename(attribute_table_widget *, const QString &);
     void save_props();
@@ -84,6 +97,8 @@ class attribute_table_widget : public QWidget
     attribute_table_view m_curr_view;
     /* edited attribute contents cache */
     QMap<QString, QString> m_attr_cache;
+    /* attr items's names */
+    QStringList m_attr_names;
 
     void init();
     void init_action();
@@ -92,7 +107,7 @@ class attribute_table_widget : public QWidget
     void clean();
     void refresh();
 
-    void switch_view();
+    void switch_view(int i);
     void update_view_content_by_attr(const QString &attr);
 };
 

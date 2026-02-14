@@ -261,7 +261,11 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
     openNI2IncPath.replace("\\", "/");
     if (openNI2IncPath.at(openNI2IncPath.size() - 1) == "/")
     {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
         openNI2IncPath.removeAt(openNI2IncPath.size() - 1);
+#elif (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+        openNI2IncPath.remove(openNI2IncPath.size() - 1, 1);
+#endif
     }
 
     if (openNI2IncPath.isEmpty())
@@ -274,7 +278,11 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
     openNI2LibPath.replace("\\", "/");
     if (openNI2LibPath.at(openNI2LibPath.size() - 1) == "/")
     {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
         openNI2LibPath.removeAt(openNI2LibPath.size() - 1);
+#elif (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+        openNI2LibPath.remove(openNI2LibPath.size() - 1, 1);
+#endif
     }
 
     if (openNI2LibPath.isEmpty())
@@ -436,7 +444,12 @@ QString library_auto_scan_widget::get_specific_version(const QString &rootDir,
             if (i != -1)
             {
                 QString s;
+
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
                 s.assign(dir.begin() + i + 1, dir.end());
+#elif (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+                s = dir.right(dir.end() - dir.begin() - i - 1);
+#endif
                 version = s;
                 break;
             }

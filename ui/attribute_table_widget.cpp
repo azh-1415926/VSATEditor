@@ -150,6 +150,264 @@ void attribute_table_widget::save_as(const QString &file_path, bool to_rename)
     refresh();
 }
 
+void attribute_table_widget::attr_item_clicked(QListWidgetItem *item)
+{
+    int i = m_attr_names.indexOf(item->text());
+    QString attr = default_attributes[i].second;
+
+    if (i == -1)
+        return;
+
+    ui->alter_text->blockSignals(true);
+    ui->alter_text->clear();
+    ui->alter_text->blockSignals(false);
+
+    ui->alter_muti_lines_text->blockSignals(true);
+    ui->alter_muti_lines_text->clear();
+    ui->alter_muti_lines_text->blockSignals(false);
+
+    update_view_content_by_attr(attr);
+}
+
+void attribute_table_widget::configuration_changed(const QString &conf)
+{
+    QStringList configurations_list = {"Debug", "Release", "MinSizeRel",
+                                       "RelWithDebInfo"};
+
+    int i = configurations_list.indexOf(conf);
+
+    switch (i)
+    {
+    case -1:
+        break;
+
+    case 0:
+        this->m_curr_conf.configuration = configuration_type::Debug;
+        break;
+
+    case 1:
+        this->m_curr_conf.configuration = configuration_type::Release;
+        break;
+
+    case 2:
+        this->m_curr_conf.configuration = configuration_type::MinSizeRel;
+        break;
+
+    case 3:
+        this->m_curr_conf.configuration = configuration_type::RelWithDebInfo;
+        break;
+
+    default:
+        break;
+    }
+
+    clean();
+    refresh();
+}
+
+void attribute_table_widget::platform_changed(const QString &platform)
+{
+    QStringList platforms_list = {"x64", "Win32"};
+
+    int i = platforms_list.indexOf(platform);
+
+    switch (i)
+    {
+    case -1:
+        break;
+
+    case 0:
+        this->m_curr_conf.platform = platform_type::Win64;
+        break;
+
+    case 1:
+        this->m_curr_conf.platform = platform_type::Win32;
+        break;
+
+    default:
+        break;
+    }
+
+    clean();
+    refresh();
+}
+
+void attribute_table_widget::single_editor_text_changed()
+{
+    auto items = ui->attrs->selectedItems();
+    if (items.empty())
+    {
+        return;
+    }
+
+    m_state = attribute_table_status::NO_SAVE;
+    emit rename(this, m_name + " [*]");
+
+    int i = m_attr_names.indexOf(items.at(0)->text());
+    QString attr = default_attributes.at(i).second;
+
+    QString value = ui->alter_text->toPlainText();
+    m_attr_cache.insert(attr, value);
+    qDebug() << "cache : " << ui->alter_text->toPlainText();
+
+    ui->alter_muti_lines_text->blockSignals(true);
+    ui->alter_muti_lines_text->clear();
+    ui->alter_muti_lines_text->blockSignals(false);
+
+    update_view_content_by_attr(attr);
+}
+
+void attribute_table_widget::multi_editor_text_changed()
+{
+    auto items = ui->attrs->selectedItems();
+    if (items.empty())
+    {
+        return;
+    }
+
+    m_state = attribute_table_status::NO_SAVE;
+    emit rename(this, m_name + " [*]");
+
+    int i = m_attr_names.indexOf(items.at(0)->text());
+    QString attr = default_attributes.at(i).second;
+
+    QString value;
+    if (attr != "AdditionalOptions")
+    {
+        value = ui->alter_muti_lines_text->toPlainText().replace("\n", ";");
+    }
+    else
+    {
+        value = ui->alter_muti_lines_text->toPlainText().replace("\n", " ");
+    }
+
+    m_attr_cache.insert(attr, value);
+    qDebug() << "cache : " << value;
+
+    ui->alter_text->blockSignals(true);
+    ui->alter_text->clear();
+    ui->alter_text->blockSignals(false);
+
+    update_view_content_by_attr(attr);
+}
+
+void attribute_table_widget::exit_without_saving()
+{
+    if (m_state == attribute_table_status::NO_SAVE)
+    {
+        QMessageBox::StandardButton btn = QMessageBox::warning(
+            this, "close props editor",
+            "你确定要关闭当前属性表吗，该属性表并未保存",
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
+        if (btn == QMessageBox::No)
+        {
+            return;
+        }
+    }
+
+    emit exit();
+}
+
+void attribute_table_widget::save_as_btn_clicked()
+{
+    const QString &filepath = QFileDialog::getSaveFileName(
+        this, QStringLiteral("Save Props Or Project file"), "",
+        QStringLiteral("props file(*.props)"));
+    if (filepath.isEmpty())
+    {
+        QMessageBox::warning(this, "save as props", "用户取消了 '另存为'");
+        return;
+    }
+
+    save_as(filepath);
+    QMessageBox::about(this, "save as props", "保存成功，已保存至" + filepath);
+}
+
+void attribute_table_widget::add_path_btn_clicked()
+{
+    auto items = ui->attrs->selectedItems();
+    if (items.empty())
+    {
+        QMessageBox::warning(this, "添加附加目录/附加依赖项",
+                             "请在左侧选择附加目录或附加依赖项属性");
+        return;
+    }
+
+    /* 当前展示的属性 */
+    QStringList attr_names;
+
+    for (const auto &attr : default_attributes)
+    {
+        attr_names.push_back(attr.first);
+    }
+
+    int i = attr_names.indexOf(items.at(0)->text());
+    QString attr = default_attributes.at(i).second;
+
+    if (attr == "ClCompile|AdditionalIncludeDirectories" ||
+        attr == "Link|AdditionalLibraryDirectories")
+    {
+        file_selector_dialog dlg;
+        QStringList incs_path = dlg.getExistingDirectories(
+            "选择文件夹路径(可多选)", QDir::currentPath());
+        if (incs_path.isEmpty())
+        {
+            QMessageBox::warning(this, "选择附加目录",
+                                 "未选择附加目录/附加依赖项");
+            return;
+        }
+
+        if (ui->alter_text->toPlainText().isEmpty())
+        {
+            ui->alter_text->setText(incs_path.join(";"));
+        }
+        else
+        {
+            ui->alter_text->setText(ui->alter_text->toPlainText() + ";" +
+                                    incs_path.join(";"));
+        }
+    }
+    else if (attr == "Link|AdditionalDependencies")
+    {
+        QStringList libs_path = QFileDialog::getOpenFileNames(
+            this, "选择库文件(可多选)", QDir::currentPath(), "*.lib");
+        if (libs_path.isEmpty())
+        {
+            QMessageBox::warning(this, "选择附加依赖项",
+                                 "未选择附加目录/附加依赖项");
+            return;
+        }
+
+        int ret = QMessageBox::question(
+            this, "添加附加依赖项", "是否选取库的绝对路径, 否则取库文件名",
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
+        if (ret == QMessageBox::No)
+        {
+            for (auto &lib_path : libs_path)
+            {
+                QStringList list = lib_path.split("/");
+                if (!list.isEmpty())
+                {
+                    lib_path = list.at(list.size() - 1);
+                }
+            }
+        }
+
+        if (ui->alter_text->toPlainText().isEmpty())
+            ui->alter_text->setText(libs_path.join(";"));
+        else
+            ui->alter_text->setText(ui->alter_text->toPlainText() + ";" +
+                                    libs_path.join(";"));
+    }
+    else
+    {
+        QMessageBox::warning(this, "添加附加目录/附加依赖项",
+                             "该属性无需添加附加目录/附加依赖项");
+    }
+}
+
 void attribute_table_widget::init()
 {
     /* 初始化为 unload */
@@ -161,163 +419,34 @@ void attribute_table_widget::init()
     ui->original_muti_lines_text->setReadOnly(true);
 
     /* 将默认可编辑属性加入窗口展示框中 */
-    QStringList attr_names;
-
     for (const auto &attr : default_attributes)
     {
-        attr_names.push_back(attr.first);
+        m_attr_names.push_back(attr.first);
     }
+    ui->attrs->addItems(m_attr_names);
 
-    ui->attrs->addItems(attr_names);
     /* 当 QListWidget 被点击，则更新当前被点击属性的内容 */
     connect(ui->attrs, &QListWidget::itemClicked, this,
-            [=](QListWidgetItem *item) {
-                int i = attr_names.indexOf(item->text());
-                QString attr = default_attributes[i].second;
-
-                if (i == -1)
-                    return;
-
-                ui->alter_text->blockSignals(true);
-                ui->alter_text->clear();
-                ui->alter_text->blockSignals(false);
-
-                ui->alter_muti_lines_text->blockSignals(true);
-                ui->alter_muti_lines_text->clear();
-                ui->alter_muti_lines_text->blockSignals(false);
-
-                update_view_content_by_attr(attr);
-            });
+            &attribute_table_widget::attr_item_clicked);
 
     /* 当切换 Debug/Release 时，存储当前配置，并清空保存的内容与刷新输入框内容
      */
     connect(ui->configuration_combo, &QComboBox::currentTextChanged, this,
-            [=](const QString &s) {
-                QStringList configurations_list = {
-                    "Debug", "Release", "MinSizeRel", "RelWithDebInfo"};
-
-                int i = configurations_list.indexOf(s);
-
-                switch (i)
-                {
-                case -1:
-                    break;
-
-                case 0:
-                    this->m_curr_conf.configuration = configuration_type::Debug;
-                    break;
-
-                case 1:
-                    this->m_curr_conf.configuration =
-                        configuration_type::Release;
-                    break;
-
-                case 2:
-                    this->m_curr_conf.configuration =
-                        configuration_type::MinSizeRel;
-                    break;
-
-                case 3:
-                    this->m_curr_conf.configuration =
-                        configuration_type::RelWithDebInfo;
-                    break;
-
-                default:
-                    break;
-                }
-
-                clean();
-                refresh();
-            });
+            &attribute_table_widget::configuration_changed);
 
     /* 当切换 x64/Win32 时，存储当前配置，并清空保存的内容与刷新输入框内容 */
     connect(ui->platform_combo, &QComboBox::currentTextChanged, this,
-            [=](const QString &s) {
-                QStringList platforms_list = {"x64", "Win32"};
-
-                int i = platforms_list.indexOf(s);
-
-                switch (i)
-                {
-                case -1:
-                    break;
-
-                case 0:
-                    this->m_curr_conf.platform = platform_type::Win64;
-                    break;
-
-                case 1:
-                    this->m_curr_conf.platform = platform_type::Win32;
-                    break;
-
-                default:
-                    break;
-                }
-
-                clean();
-                refresh();
-            });
+            &attribute_table_widget::platform_changed);
 
     /* 当单行内容编辑框，内容更改，则将状态切换为 unsave，并更新窗口名称，附带上
      * * 表明未保存 */
-    connect(ui->alter_text, &QTextEdit::textChanged, this, [=]() {
-        auto items = ui->attrs->selectedItems();
-        if (items.empty())
-        {
-            return;
-        }
-
-        m_state = attribute_table_status::NO_SAVE;
-        emit rename(this, m_name + " [*]");
-
-        int i = attr_names.indexOf(items.at(0)->text());
-        QString attr = default_attributes.at(i).second;
-
-        QString value = ui->alter_text->toPlainText();
-        m_attr_cache.insert(attr, value);
-        qDebug() << "cache : " << ui->alter_text->toPlainText();
-
-        ui->alter_muti_lines_text->blockSignals(true);
-        ui->alter_muti_lines_text->clear();
-        ui->alter_muti_lines_text->blockSignals(false);
-
-        update_view_content_by_attr(attr);
-    });
+    connect(ui->alter_text, &QTextEdit::textChanged, this,
+            &attribute_table_widget::single_editor_text_changed);
 
     /* 当多行内容编辑框，内容更改，则将状态切换为 unsave，并更新窗口名称，附带上
      * * 表明未保存 */
-    connect(ui->alter_muti_lines_text, &QTextEdit::textChanged, this, [=]() {
-        auto items = ui->attrs->selectedItems();
-        if (items.empty())
-        {
-            return;
-        }
-
-        m_state = attribute_table_status::NO_SAVE;
-        emit rename(this, m_name + " [*]");
-
-        int i = attr_names.indexOf(items.at(0)->text());
-        QString attr = default_attributes.at(i).second;
-
-        QString value;
-        if (attr != "AdditionalOptions")
-        {
-            value = ui->alter_muti_lines_text->toPlainText().replace("\n", ";");
-        }
-        else
-        {
-            value = ui->alter_muti_lines_text->toPlainText().replace("\n", " ");
-        }
-
-        m_attr_cache.insert(attr, value);
-        qDebug() << "cache : " << value;
-
-        ui->alter_text->blockSignals(true);
-        ui->alter_text->clear();
-        ui->alter_text->blockSignals(false);
-
-        update_view_content_by_attr(attr);
-    });
+    connect(ui->alter_muti_lines_text, &QTextEdit::textChanged, this,
+            &attribute_table_widget::multi_editor_text_changed);
 }
 
 void attribute_table_widget::init_action()
@@ -327,143 +456,20 @@ void attribute_table_widget::init_action()
             &attribute_table_widget::save);
 
     /* save as action */
-    connect(ui->save_as_btn, &QPushButton::clicked, this, [=]() {
-        const QString &filepath = QFileDialog::getSaveFileName(
-            this, QStringLiteral("Save Props Or Project file"), "",
-            QStringLiteral("props file(*.props)"));
-        if (filepath.isEmpty())
-        {
-            QMessageBox::warning(this, "save as props", "用户取消了 '另存为'");
-            return;
-        }
-
-        save_as(filepath);
-        QMessageBox::about(this, "save as props",
-                           "保存成功，已保存至" + filepath);
-    });
+    connect(ui->save_as_btn, &QPushButton::clicked, this,
+            &attribute_table_widget::save_as_btn_clicked);
 
     /* exit_nosave action */
-    connect(ui->exit_nosave_btn, &QPushButton::clicked, this, [=]() {
-        if (m_state == attribute_table_status::NO_SAVE)
-        {
-            QMessageBox::StandardButton btn = QMessageBox::warning(
-                this, "close props editor",
-                "你确定要关闭当前属性表吗，该属性表并未保存",
-                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-
-            if (btn == QMessageBox::No)
-            {
-                return;
-            }
-        }
-
-        emit exit();
-    });
+    connect(ui->exit_nosave_btn, &QPushButton::clicked, this,
+            &attribute_table_widget::exit_without_saving);
 
     /* add additional directories or additional libraries */
-    connect(ui->add_path_btn, &QPushButton::clicked, this, [=]() {
-        auto items = ui->attrs->selectedItems();
-        if (items.empty())
-        {
-            QMessageBox::warning(this, "添加附加目录/附加依赖项",
-                                 "请在左侧选择附加目录或附加依赖项属性");
-            return;
-        }
-
-        /* 当前展示的属性 */
-        QStringList attr_names;
-
-        for (const auto &attr : default_attributes)
-        {
-            attr_names.push_back(attr.first);
-        }
-
-        int i = attr_names.indexOf(items.at(0)->text());
-        QString attr = default_attributes.at(i).second;
-
-        if (attr == "ClCompile|AdditionalIncludeDirectories" ||
-            attr == "Link|AdditionalLibraryDirectories")
-        {
-            file_selector_dialog dlg;
-            QStringList incs_path = dlg.getExistingDirectories(
-                "选择文件夹路径(可多选)", QDir::currentPath());
-            if (incs_path.isEmpty())
-            {
-                QMessageBox::warning(this, "选择附加目录",
-                                     "未选择附加目录/附加依赖项");
-                return;
-            }
-
-            if (ui->alter_text->toPlainText().isEmpty())
-            {
-                ui->alter_text->setText(incs_path.join(";"));
-            }
-            else
-            {
-                ui->alter_text->setText(ui->alter_text->toPlainText() + ";" +
-                                        incs_path.join(";"));
-            }
-        }
-        else if (attr == "Link|AdditionalDependencies")
-        {
-            QStringList libs_path = QFileDialog::getOpenFileNames(
-                this, "选择库文件(可多选)", QDir::currentPath(), "*.lib");
-            if (libs_path.isEmpty())
-            {
-                QMessageBox::warning(this, "选择附加依赖项",
-                                     "未选择附加目录/附加依赖项");
-                return;
-            }
-
-            int ret = QMessageBox::question(
-                this, "添加附加依赖项", "是否选取库的绝对路径, 否则取库文件名",
-                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-
-            if (ret == QMessageBox::No)
-            {
-                for (auto &lib_path : libs_path)
-                {
-                    QStringList list = lib_path.split("/");
-                    if (!list.isEmpty())
-                    {
-                        lib_path = list.at(list.size() - 1);
-                    }
-                }
-            }
-
-            if (ui->alter_text->toPlainText().isEmpty())
-                ui->alter_text->setText(libs_path.join(";"));
-            else
-                ui->alter_text->setText(ui->alter_text->toPlainText() + ";" +
-                                        libs_path.join(";"));
-        }
-        else
-        {
-            QMessageBox::warning(this, "添加附加目录/附加依赖项",
-                                 "该属性无需添加附加目录/附加依赖项");
-        }
-    });
+    connect(ui->add_path_btn, &QPushButton::clicked, this,
+            &attribute_table_widget::add_path_btn_clicked);
 
     /* switch view action */
     connect(ui->view_combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, [=](int i) {
-                switch (i)
-                {
-                case 0:
-                    m_curr_view = attribute_table_view::RAW;
-                    break;
-
-                case 1:
-                    m_curr_view = attribute_table_view::MUTI_LINES;
-                    break;
-
-                default:
-                    m_curr_view = attribute_table_view::RAW;
-                    break;
-                }
-
-                switch_view();
-            });
+            this, &attribute_table_widget::switch_view);
 }
 
 void attribute_table_widget::init_conf()
@@ -586,8 +592,23 @@ void attribute_table_widget::refresh()
     }
 }
 
-void attribute_table_widget::switch_view()
+void attribute_table_widget::switch_view(int i)
 {
+    switch (i)
+    {
+    case 0:
+        m_curr_view = attribute_table_view::RAW;
+        break;
+
+    case 1:
+        m_curr_view = attribute_table_view::MUTI_LINES;
+        break;
+
+    default:
+        m_curr_view = attribute_table_view::RAW;
+        break;
+    }
+
     switch (m_curr_view)
     {
     case attribute_table_view::RAW:

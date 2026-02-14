@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.5)
+project(Custom_Library_Demo)
+
+set(CMAKE_CXX_STANDARD 17)
+
+add_compile_options($<$<C_COMPILER_ID:MSVC>:/utf-8>)
+add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
+
+find_package(Custom_Library REQUIRED)
+
+include_directories(${Custom_Library_INCLUDE_DIRS})
+
+add_executable(${PROJECT_NAME} main.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${Custom_Library_LIBRARIES})

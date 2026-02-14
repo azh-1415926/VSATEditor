@@ -1,0 +1,13 @@
+CGAl、Boost、PCL 下载链接参考：
+1. CGAL gmp : 
+https://github.com/CGAL/cgal/releases/download/v6.1/CGAL-6.1-win64-auxiliary-libraries-gmp-mpfr.zip
+2. CGAL source : 
+https://github.com/CGAL/cgal/releases/download/v6.1/CGAL-6.1.zip
+3. Boost : 
+https://archives.boost.io/release/1.89.0/binaries/boost_1_89_0-msvc-14.3-64.exe
+4. PCL : 
+https://github.com/PointCloudLibrary/pcl/releases/download/pcl-1.15.1/PCL-1.15.1-AllInOne-msvc2022-win64.exe
+
+Github 文件加速下载镜像：
+https://gh-proxy.com/
+https://github.akams.cn/

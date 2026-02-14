@@ -1,0 +1,4 @@
+本软件用于导入、编辑、导出 VS 属性表,欢迎各位提建议
+[Auth] : azh
+[Link] : https://github.com/azh-1415926/VSATEditor
+[Ver.] : 

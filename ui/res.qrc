@@ -3,5 +3,10 @@
   <qresource prefix="/">
     <file>res/atrribute_table.png</file>
     <file>res/style.qss</file>
+    <file>res/text/cmake_qt_template.txt</file>
+    <file>res/text/link.txt</file>
+    <file>res/text/about.txt</file>
+    <file>res/text/cmake_template.txt</file>
+    <file>res/text/help.txt</file>
   </qresource>
 </RCC>
