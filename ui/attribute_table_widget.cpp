@@ -12,7 +12,7 @@
 #include "file_selector_dialog.h"
 
 /* list editable attributes by default */
-static QList<QPair<QString, QString>> default_attributes = {
+static QList<QPair<QString, QString>> global_default_attributes = {
     QPair<QString, QString>("C/C++ 预处理宏定义",
                             "ClCompile|PreprocessorDefinitions"),
     QPair<QString, QString>("C/C++ 附加包含目录",
@@ -49,29 +49,29 @@ void attribute_table_widget::load_props(const props &p)
     init_conf();
 
     /* 获取属性表路径，若存在则以文件名作为窗口名，否则为 '空属性表' */
-    std::string xml_path = m_data.get_path();
-    QString s = std2qstring(xml_path);
+    std::string xmlPath = m_data.get_path();
+    QString s = std2qstring(xmlPath);
 
     if (s.isEmpty() ||
-        !std::filesystem::exists(std::filesystem::path(xml_path).parent_path()))
+        !std::filesystem::exists(std::filesystem::path(xmlPath).parent_path()))
     {
         m_name = "空白属性表";
         emit rename(this, m_name);
         return;
     }
 
-    m_name = std2qstring(std::filesystem::path(xml_path).filename().string());
+    m_name = std2qstring(std::filesystem::path(xmlPath).filename().string());
     emit rename(this, m_name);
 }
 
 /* 保存当前属性表，默认会弹窗，也可静默保存[可选] */
-void attribute_table_widget::save(bool silence)
+void attribute_table_widget::save(bool toSilence)
 {
     if (m_state == attribute_table_status::NO_SAVE && m_data.is_load())
     {
         save_as((std2qstring(m_data.get_path())));
 
-        if (!silence)
+        if (!toSilence)
             QMessageBox::about(this, "save props/project", "保存成功");
         return;
     }
@@ -81,12 +81,12 @@ void attribute_table_widget::save(bool silence)
         return;
     }
 
-    const QString &filepath = QFileDialog::getSaveFileName(
+    const QString &filePath = QFileDialog::getSaveFileName(
         this, QStringLiteral("save props/project file"), "",
         QStringLiteral("props file(*.props)"));
-    if (filepath.isEmpty())
+    if (filePath.isEmpty())
     {
-        if (!silence)
+        if (!toSilence)
             QMessageBox::warning(this, "save props/project",
                                  "用户取消了 '保存'");
         return;
@@ -94,14 +94,14 @@ void attribute_table_widget::save(bool silence)
 
     if (m_state == attribute_table_status::NO_SAVE)
     {
-        save_as(filepath);
+        save_as(filePath);
         QMessageBox::about(this, "save props/project",
-                           "保存成功，已保存至" + filepath);
+                           "保存成功，已保存至" + filePath);
     }
 }
 
-/* 另存为 file_path, 是否重命名当前窗口为该文件名，默认为是 */
-void attribute_table_widget::save_as(const QString &file_path, bool to_rename)
+/* 另存为 filePath, 是否重命名当前窗口为该文件名，默认为是 */
+void attribute_table_widget::save_as(const QString &filePath, bool toRename)
 {
     m_state = attribute_table_status::NO_EDIT;
 
@@ -126,21 +126,21 @@ void attribute_table_widget::save_as(const QString &file_path, bool to_rename)
     }
 
     /* props's save */
-    m_data.save(file_path.toLocal8Bit().toStdString());
+    m_data.save(filePath.toLocal8Bit().toStdString());
 
     /* 获取属性表完整路径中属性表的文件名，例如
      * test.props，用作当前属性表编辑窗口的名称 */
-    if (to_rename)
+    if (toRename)
     {
 #if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
         m_name =
-            file_path.last(file_path.size() - file_path.lastIndexOf("/") - 1);
+            filePath.last(filePath.size() - filePath.lastIndexOf("/") - 1);
         emit rename(this, m_name);
 #elif (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-        const QStringList &list = file_path.split("/");
-        if (!file_path.isEmpty() && !list.isEmpty())
+        const QStringList &list = filePath.split("/");
+        if (!filePath.isEmpty() && !list.isEmpty())
         {
-            const QStringList &list = file_path.split("/");
+            const QStringList &list = filePath.split("/");
             m_name = list.at(list.size() - 1);
             emit rename(this, m_name);
         }
@@ -153,7 +153,7 @@ void attribute_table_widget::save_as(const QString &file_path, bool to_rename)
 void attribute_table_widget::attr_item_clicked(QListWidgetItem *item)
 {
     int i = m_attr_names.indexOf(item->text());
-    QString attr = default_attributes[i].second;
+    QString attr = global_default_attributes[i].second;
 
     if (i == -1)
         return;
@@ -207,9 +207,9 @@ void attribute_table_widget::configuration_changed(const QString &conf)
 
 void attribute_table_widget::platform_changed(const QString &platform)
 {
-    QStringList platforms_list = {"x64", "Win32"};
+    QStringList listOfPlatforms = {"x64", "Win32"};
 
-    int i = platforms_list.indexOf(platform);
+    int i = listOfPlatforms.indexOf(platform);
 
     switch (i)
     {
@@ -244,7 +244,7 @@ void attribute_table_widget::single_editor_text_changed()
     emit rename(this, m_name + " [*]");
 
     int i = m_attr_names.indexOf(items.at(0)->text());
-    QString attr = default_attributes.at(i).second;
+    QString attr = global_default_attributes.at(i).second;
 
     QString value = ui->alter_text->toPlainText();
     m_attr_cache.insert(attr, value);
@@ -269,7 +269,7 @@ void attribute_table_widget::multi_editor_text_changed()
     emit rename(this, m_name + " [*]");
 
     int i = m_attr_names.indexOf(items.at(0)->text());
-    QString attr = default_attributes.at(i).second;
+    QString attr = global_default_attributes.at(i).second;
 
     QString value;
     if (attr != "AdditionalOptions")
@@ -337,13 +337,13 @@ void attribute_table_widget::add_path_btn_clicked()
     /* 当前展示的属性 */
     QStringList attr_names;
 
-    for (const auto &attr : default_attributes)
+    for (const auto &attr : global_default_attributes)
     {
         attr_names.push_back(attr.first);
     }
 
     int i = attr_names.indexOf(items.at(0)->text());
-    QString attr = default_attributes.at(i).second;
+    QString attr = global_default_attributes.at(i).second;
 
     if (attr == "ClCompile|AdditionalIncludeDirectories" ||
         attr == "Link|AdditionalLibraryDirectories")
@@ -419,7 +419,7 @@ void attribute_table_widget::init()
     ui->original_muti_lines_text->setReadOnly(true);
 
     /* 将默认可编辑属性加入窗口展示框中 */
-    for (const auto &attr : default_attributes)
+    for (const auto &attr : global_default_attributes)
     {
         m_attr_names.push_back(attr.first);
     }
@@ -479,7 +479,7 @@ void attribute_table_widget::init_conf()
 
     QStringList configurations_list = {"Debug", "Release", "MinSizeRel",
                                        "RelWithDebInfo"};
-    QStringList platforms_list = {"x64", "Win32"};
+    QStringList listOfPlatforms = {"x64", "Win32"};
 
     QList<QString> configurations;
     QList<QString> platforms;
@@ -503,7 +503,7 @@ void attribute_table_widget::init_conf()
             }
         }
 
-        for (const QString &s : platforms_list)
+        for (const QString &s : listOfPlatforms)
         {
             int p_i = str.indexOf(s);
 
@@ -543,7 +543,7 @@ void attribute_table_widget::refresh()
     {
         QString attr_name = items.at(0)->text();
 
-        for (auto &i : default_attributes)
+        for (auto &i : global_default_attributes)
         {
             if (attr_name == i.first)
             {
@@ -631,13 +631,13 @@ void attribute_table_widget::update_view_content_by_attr(const QString &attr)
         return;
 
     bool isClCompile = list.at(0) == "ClCompile";
-    std::string sub_attr = list.at(1).toLocal8Bit().toStdString();
+    std::string subAttr = list.at(1).toLocal8Bit().toStdString();
 
     std::string condition =
         get_condition(m_curr_conf.configuration, m_curr_conf.platform);
     /* value from props file */
     std::string value =
-        m_data.get_attr_by_name(sub_attr, condition, isClCompile);
+        m_data.get_attr_by_name(subAttr, condition, isClCompile);
 
     QString text = std2qstring(value);
     QString cache;
@@ -665,7 +665,7 @@ void attribute_table_widget::update_view_content_by_attr(const QString &attr)
 
     /* multi lines */
 
-    if (sub_attr != "AdditionalOptions")
+    if (subAttr != "AdditionalOptions")
     {
         /* if attr not AdditionalOptions, then split by ';' */
         text = text.replace(";", "\n");

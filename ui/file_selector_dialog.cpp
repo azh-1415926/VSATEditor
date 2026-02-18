@@ -74,12 +74,12 @@ void file_selector_dialog::single_select()
 
     if (!urlSelected.isEmpty())
     {
-        QString orginal_text = ui->content_edit->toPlainText();
-        if (!orginal_text.isEmpty())
+        QString orginalText = ui->content_edit->toPlainText();
+        if (!orginalText.isEmpty())
         {
-            orginal_text += "\n";
+            orginalText += "\n";
         }
-        ui->content_edit->setText(orginal_text + urlSelected +
+        ui->content_edit->setText(orginalText + urlSelected +
                                   ui->suffix_edit->text());
     }
 }
@@ -105,11 +105,11 @@ void file_selector_dialog::multi_select()
 
     if (!urlsSelected.isEmpty())
     {
-        QString orginal_text = ui->content_edit->toPlainText();
+        QString orginalText = ui->content_edit->toPlainText();
         QString suffix = ui->suffix_edit->text();
-        if (!orginal_text.isEmpty())
+        if (!orginalText.isEmpty())
         {
-            orginal_text += "\n";
+            orginalText += "\n";
         }
 
         for (auto &url : urlsSelected)
@@ -117,7 +117,7 @@ void file_selector_dialog::multi_select()
             url += suffix;
         }
 
-        ui->content_edit->setText(orginal_text + urlsSelected.join("\n"));
+        ui->content_edit->setText(orginalText + urlsSelected.join("\n"));
     }
 }
 

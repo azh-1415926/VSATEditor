@@ -44,9 +44,9 @@ class attribute_table_widget : public QWidget
 
     attribute_table_status status() { return m_state; }
     bool is_edit() { return m_state == attribute_table_status::NO_SAVE; }
-    void set_edit_state(bool is_edit)
+    void set_edit_state(bool toEdit)
     {
-        if (is_edit)
+        if (toEdit)
         {
             m_state = attribute_table_status::NO_SAVE;
             emit rename(this, m_name + " [*]");

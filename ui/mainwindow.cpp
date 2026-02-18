@@ -60,16 +60,16 @@ void MainWindow::new_attribute_table_wdiget_by_props(const props &p)
     connect(w, &attribute_table_widget::exit, this,
             &MainWindow::remove_attribute_table_widget);
 
-    attribute_table_widget *curr_w = w;
+    attribute_table_widget *currWidget = w;
     if (ui->props_editors->count() == 1)
     {
-        curr_w = static_cast<attribute_table_widget *>(
+        currWidget = static_cast<attribute_table_widget *>(
             ui->props_editors->currentWidget());
     }
 
-    if (curr_w && !curr_w->is_load() && p.is_load())
+    if (currWidget && !currWidget->is_load() && p.is_load())
     {
-        curr_w->load_props(p);
+        currWidget->load_props(p);
     }
     else
     {
@@ -166,9 +166,9 @@ void MainWindow::remove_attribute_table_widget()
 
 void MainWindow::open_global_win64_attribute_table()
 { /* 全局属性表所在文件夹 */
-    QString props_root =
+    QString globalPropsRoot =
         QDir::homePath() + "/AppData/Local/Microsoft/MSBuild/v4.0";
-    props p(qstring2std(props_root) + "/" +
+    props p(qstring2std(globalPropsRoot) + "/" +
                 get_user_props_name_by_platform(platform_type::Win64),
             0);
     if (!p.is_load())
@@ -183,20 +183,20 @@ void MainWindow::open_global_win64_attribute_table()
         }
 
         QDir dir;
-        dir.mkpath(props_root);
+        dir.mkpath(globalPropsRoot);
         p.save();
         QMessageBox::about(this, "import props", "已为您创建 x64 全局属性表");
     }
-    // p.print_content();
+
     new_attribute_table_wdiget_by_props(p);
 }
 
 void MainWindow::open_global_win32_attribute_table()
 { /* 全局属性表所在文件夹 */
-    QString props_root =
+    QString globalPropsRoot =
         QDir::homePath() + "/AppData/Local/Microsoft/MSBuild/v4.0";
 
-    props p(qstring2std(props_root) + "/" +
+    props p(qstring2std(globalPropsRoot) + "/" +
                 get_user_props_name_by_platform(platform_type::Win32),
             1);
     if (!p.is_load())
@@ -211,31 +211,31 @@ void MainWindow::open_global_win32_attribute_table()
         }
 
         QDir dir;
-        dir.mkpath(props_root);
+        dir.mkpath(globalPropsRoot);
         p.save();
         QMessageBox::about(this, "import props", "已为您创建 Win32 全局属性表");
     }
-    // p.print_content();
+
     new_attribute_table_wdiget_by_props(p);
 }
 
 void MainWindow::open_attribute_table_by_props_or_vcxproj()
 {
-    const QString &filepath = QFileDialog::getOpenFileName(
+    const QString &filePath = QFileDialog::getOpenFileName(
         this, QStringLiteral("select props/project file"), "",
         QStringLiteral("props/project file(*.vcxproj *.props)"));
 
-    if (!filepath.isEmpty())
+    if (!filePath.isEmpty())
     {
         props p;
 
-        if (filepath.endsWith(".props"))
+        if (filePath.endsWith(".props"))
         {
-            p.load(qstring2std(filepath));
+            p.load(qstring2std(filePath));
         }
-        else if (filepath.endsWith(".vcxproj"))
+        else if (filePath.endsWith(".vcxproj"))
         {
-            p = props::from_project_file(qstring2std(filepath));
+            p = props::from_project_file(qstring2std(filePath));
         }
         else
         {
@@ -321,14 +321,14 @@ void MainWindow::list_sub_props_in_activate_attribute_table()
         }
 
         const std::vector<std::string> &sheets = p.get_property_sheets();
-        QStringList sub_props;
+        QStringList subProps;
 
         for (const auto &s : sheets)
         {
-            sub_props.push_back(std2qstring(s));
+            subProps.push_back(std2qstring(s));
         }
 
-        if (sub_props.empty())
+        if (subProps.empty())
         {
             QMessageBox::warning(this, "list sub props",
                                  "当前属性表无子属性表");
@@ -336,7 +336,7 @@ void MainWindow::list_sub_props_in_activate_attribute_table()
         }
 
         QMessageBox::about(this, "list sub props",
-                           "当前属性表的子属性表有: \n" + sub_props.join("\n"));
+                           "当前属性表的子属性表有: \n" + subProps.join("\n"));
     }
 }
 
@@ -357,18 +357,18 @@ void MainWindow::add_sub_props_in_activate_attribute_table()
             return;
         }
 
-        const QString &filepath = QFileDialog::getOpenFileName(
+        const QString &filePath = QFileDialog::getOpenFileName(
             this, QStringLiteral("add sub props to current props"), "",
             QStringLiteral("props file(*.props)"));
 
-        if (filepath.isEmpty())
+        if (filePath.isEmpty())
         {
             QMessageBox::warning(this, "add sub props",
                                  "用户取消了 '添加子属性表'");
             return;
         }
 
-        p.add_property_sheet(qstring2std(filepath));
+        p.add_property_sheet(qstring2std(filePath));
         w->load_props(p);
         w->set_edit_state(true);
         QMessageBox::about(this, "add sub props",
@@ -394,14 +394,14 @@ void MainWindow::remove_sub_props_in_activate_attribute_table()
         }
 
         const std::vector<std::string> &sheets = p.get_property_sheets();
-        QStringList sub_props;
+        QStringList subProps;
 
         for (const auto &s : sheets)
         {
-            sub_props.push_back(std2qstring(s));
+            subProps.push_back(std2qstring(s));
         }
 
-        if (sub_props.empty())
+        if (subProps.empty())
         {
             QMessageBox::warning(this, "remove sub props",
                                  "当前属性表无子属性表,无需删除子属性表");
@@ -410,7 +410,7 @@ void MainWindow::remove_sub_props_in_activate_attribute_table()
 
         bool ok;
         QString sub_props_file = QInputDialog::getItem(
-            this, "remove sub props", "请选择要删除的子属性表:", sub_props, 0,
+            this, "remove sub props", "请选择要删除的子属性表:", subProps, 0,
             false, &ok);
 
         if (!ok || sub_props_file.isEmpty())
@@ -420,8 +420,7 @@ void MainWindow::remove_sub_props_in_activate_attribute_table()
             return;
         }
 
-        // remove sub_props_file from current props's property_sheets
-
+        /* remove sub_props_file from current props's property_sheets */
         p.remove_property_sheet(qstring2std(sub_props_file));
         w->load_props(p);
         w->set_edit_state(true);
@@ -447,13 +446,13 @@ void MainWindow::cover_props_in_activate_attribute_table()
             return;
         }
 
-        const QString &filepath = QFileDialog::getOpenFileName(
+        const QString &filePath = QFileDialog::getOpenFileName(
             this, QStringLiteral("select props file to cover current props"),
             "", QStringLiteral("props file(*.props)"));
 
-        if (!filepath.isEmpty())
+        if (!filePath.isEmpty())
         {
-            props temp_p(qstring2std(filepath));
+            props temp_p(qstring2std(filePath));
 
             if (!temp_p.is_load() || !temp_p.check())
             {
