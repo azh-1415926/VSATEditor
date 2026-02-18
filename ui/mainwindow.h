@@ -24,7 +24,8 @@ class MainWindow : public QMainWindow
 
   public slots:
     void props_editor_rename(attribute_table_widget *, const QString &name);
-    void new_attribute_table_wdiget();
+    void new_attribute_table_wdiget_for_win64();
+    void new_attribute_table_wdiget_for_win32();
     void new_attribute_table_wdiget_by_props(const props &p);
     void new_attribute_table_wdiget_by_scanner();
     void remove_attribute_table_widget();
@@ -37,7 +38,12 @@ class MainWindow : public QMainWindow
     void open_multi_function_selector();
     void open_library_auto_scanner();
 
+    /* file action menu */
     void save_props_in_activate_attribute_table();
+    void save_as_props_in_activate_attribute_table();
+    void add_additional_dirs_or_deps_props_in_activate_attribute_table();
+
+    /*  */
     void open_props_dir_in_activate_attribute_table();
 
     /* sub props management */

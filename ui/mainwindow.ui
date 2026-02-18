@@ -52,8 +52,10 @@
      <addaction name="project_props_action"/>
     </widget>
     <addaction name="import_menu"/>
-    <addaction name="new_props_action"/>
+    <addaction name="new_win64_props_action"/>
+    <addaction name="new_win32_props_action"/>
     <addaction name="save_props_action"/>
+    <addaction name="save_as_props_action"/>
     <addaction name="close_props_action"/>
    </widget>
    <widget class="QMenu" name="other_menu">
@@ -78,6 +80,7 @@
     <addaction name="open_props_path_action"/>
     <addaction name="menu_2"/>
     <addaction name="cover_props_action"/>
+    <addaction name="add_additional_dirs_or_deps_props_action"/>
    </widget>
    <widget class="QMenu" name="menu">
     <property name="title">
@@ -123,9 +126,9 @@
     <string>Win32</string>
    </property>
   </action>
-  <action name="new_props_action">
+  <action name="new_win64_props_action">
    <property name="text">
-    <string>新建属性表</string>
+    <string>新建x64属性表</string>
    </property>
   </action>
   <action name="save_props_action">
@@ -216,6 +219,21 @@
   <action name="scan_lib_action">
    <property name="text">
     <string>扫描常见库</string>
+   </property>
+  </action>
+  <action name="new_win32_props_action">
+   <property name="text">
+    <string>新建x86属性表</string>
+   </property>
+  </action>
+  <action name="save_as_props_action">
+   <property name="text">
+    <string>另存当前属性表</string>
+   </property>
+  </action>
+  <action name="add_additional_dirs_or_deps_props_action">
+   <property name="text">
+    <string>添加附加目录/附加依赖项</string>
    </property>
   </action>
  </widget>

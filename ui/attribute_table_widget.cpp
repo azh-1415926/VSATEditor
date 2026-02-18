@@ -72,31 +72,29 @@ void attribute_table_widget::save(bool toSilence)
         save_as((std2qstring(m_data.get_path())));
 
         if (!toSilence)
-            QMessageBox::about(this, "save props/project", "保存成功");
+            QMessageBox::about(this, "保存属性表", "保存成功");
         return;
     }
     else if (m_state == attribute_table_status::NO_EDIT && is_load())
     {
-        QMessageBox::about(this, "save props/project", "未编辑，无需保存");
+        QMessageBox::about(this, "保存属性表", "未编辑，无需保存");
         return;
     }
 
-    const QString &filePath = QFileDialog::getSaveFileName(
-        this, QStringLiteral("save props/project file"), "",
-        QStringLiteral("props file(*.props)"));
+    const QString &filePath =
+        QFileDialog::getSaveFileName(this, QStringLiteral("保存属性表"), "",
+                                     QStringLiteral("props file(*.props)"));
     if (filePath.isEmpty())
     {
         if (!toSilence)
-            QMessageBox::warning(this, "save props/project",
-                                 "用户取消了 '保存'");
+            QMessageBox::warning(this, "保存属性表", "用户取消了 '保存'");
         return;
     }
 
-    if (m_state == attribute_table_status::NO_SAVE)
+    if (m_state == attribute_table_status::NO_SAVE || !is_load())
     {
         save_as(filePath);
-        QMessageBox::about(this, "save props/project",
-                           "保存成功，已保存至" + filePath);
+        QMessageBox::about(this, "保存属性表", "保存成功，已保存至" + filePath);
     }
 }
 
@@ -133,8 +131,7 @@ void attribute_table_widget::save_as(const QString &filePath, bool toRename)
     if (toRename)
     {
 #if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
-        m_name =
-            filePath.last(filePath.size() - filePath.lastIndexOf("/") - 1);
+        m_name = filePath.last(filePath.size() - filePath.lastIndexOf("/") - 1);
         emit rename(this, m_name);
 #elif (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
         const QStringList &list = filePath.split("/");
@@ -311,17 +308,17 @@ void attribute_table_widget::exit_without_saving()
 
 void attribute_table_widget::save_as_btn_clicked()
 {
-    const QString &filepath = QFileDialog::getSaveFileName(
-        this, QStringLiteral("Save Props Or Project file"), "",
-        QStringLiteral("props file(*.props)"));
-    if (filepath.isEmpty())
+    const QString &filePath =
+        QFileDialog::getSaveFileName(this, QStringLiteral("另存属性表"), "",
+                                     QStringLiteral("props file(*.props)"));
+    if (filePath.isEmpty())
     {
-        QMessageBox::warning(this, "save as props", "用户取消了 '另存为'");
+        QMessageBox::warning(this, "另存属性表", "用户取消了 '另存为'");
         return;
     }
 
-    save_as(filepath);
-    QMessageBox::about(this, "save as props", "保存成功，已保存至" + filepath);
+    save_as(filePath);
+    QMessageBox::about(this, "另存属性表", "保存成功，已保存至" + filePath);
 }
 
 void attribute_table_widget::add_path_btn_clicked()
@@ -526,7 +523,7 @@ void attribute_table_widget::init_conf()
     ui->platform_combo->addItems(platforms);
 
     ui->view_combo->clear();
-    ui->view_combo->addItems(QStringList() << "Single Line" << "Multi Lines");
+    ui->view_combo->addItems(QStringList() << "单行视图" << "多行视图");
 }
 
 void attribute_table_widget::clean()

@@ -290,8 +290,6 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
         openNI2LibPath = rootDir + "/3rdParty/FLANN/Lib";
     }
 
-    incPaths.push_back(openNI2IncPath);
-
     /* Eigen3 */
     if (is_file_or_dir_exists(rootDir + "/3rdParty/Eigen3/include/eigen3"))
     {
@@ -301,6 +299,9 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
     {
         incPaths.push_back(rootDir + "/3rdParty/Eigen3/eigen3");
     }
+
+    /* OpenNI2 inc */
+    incPaths.push_back(openNI2IncPath);
 
     /* lib path */
     QStringList libPaths = {rootDir + "/lib", rootDir + "/3rdParty/Boost/lib",
@@ -340,23 +341,22 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
     QStringList boostLibNames =
         get_lib_names(rootDir + "/3rdParty/Boost/lib",
                       "-mt-" + ui->platform_combo->currentText());
-
     if (boostLibNames.isEmpty())
     {
         boostLibNames =
             get_lib_names(rootDir + "/3rdParty/Boost/lib", boostLibSuffix);
     }
-
     libNames.append(boostLibNames);
+
     /* VTK */
     QString vtkLibSuffix =
         "-" + get_specific_version(rootDir + "/3rdParty/VTK", "vtk") + ".lib";
-    QMessageBox::warning(this, "", vtkLibSuffix);
     libNames.append(get_lib_names(rootDir + "/3rdParty/VTK/lib", vtkLibSuffix));
 
     /* flann */
     libNames.push_back("flann.lib");
     libNames.push_back("flann_cpp.lib");
+
     /* qhull */
     libNames.push_back("qhull.lib");
     libNames.push_back("qhull_cpp.lib");
@@ -365,9 +365,10 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
     {
         libNames.push_back("qhull_p.lib");
     }
-    /* openni2 */
-    libNames.push_back("OpenNI2.lib");
 
+    /* OpenNI2 lib */
+    libNames.push_back("OpenNI2.lib");
+    /* show incs、lib_dirs、libs */
     ui->incs_edit->setText(incPaths.join("\n"));
     ui->lib_dir_edit->setText(libPaths.join("\n"));
     ui->libs_edit->setText(libNames.join("\n"));
