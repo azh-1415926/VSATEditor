@@ -94,40 +94,48 @@ void MainWindow::new_attribute_table_wdiget_by_scanner()
     std::string libNames =
         m_library_scanner->get_lib_names().join(";").toStdString();
 
+    std::string incRelPaths =
+        m_library_scanner->get_inc_paths(false).join(";").toStdString();
+    std::string libRelPaths =
+        m_library_scanner->get_lib_paths(false).join(";").toStdString();
+
+    std::string libRelNames =
+        m_library_scanner->get_lib_names(false).join(";").toStdString();
+
     props p;
 
     if (m_library_scanner->get_platform() == "x64")
     {
         p.set_attr("AdditionalIncludeDirectories", incPaths,
                    props_attr_preset::DEBUG_WIN64_CLCOMPILE);
-        p.set_attr("AdditionalIncludeDirectories", incPaths,
+        p.set_attr("AdditionalIncludeDirectories", incRelPaths,
                    props_attr_preset::RELEASE_WIN64_CLCOMPILE);
 
         p.set_attr("AdditionalLibraryDirectories", libPaths,
                    props_attr_preset::DEBUG_WIN64_LINK);
-        p.set_attr("AdditionalLibraryDirectories", libPaths,
+        p.set_attr("AdditionalLibraryDirectories", libRelPaths,
                    props_attr_preset::RELEASE_WIN64_LINK);
 
         p.set_attr("AdditionalDependencies", libNames,
                    props_attr_preset::DEBUG_WIN64_LINK);
-        p.set_attr("AdditionalDependencies", libNames,
+        p.set_attr("AdditionalDependencies", libRelNames,
                    props_attr_preset::RELEASE_WIN64_LINK);
     }
     else if (m_library_scanner->get_platform() == "x86")
     {
         p.set_attr("AdditionalIncludeDirectories", incPaths,
                    props_attr_preset::DEBUG_WIN32_CLCOMPILE);
-        p.set_attr("AdditionalIncludeDirectories", incPaths,
+        p.set_attr("AdditionalIncludeDirectories", incRelPaths,
                    props_attr_preset::RELEASE_WIN32_CLCOMPILE);
 
         p.set_attr("AdditionalLibraryDirectories", libPaths,
                    props_attr_preset::DEBUG_WIN32_LINK);
-        p.set_attr("AdditionalLibraryDirectories", libPaths,
+        p.set_attr("AdditionalLibraryDirectories", libRelPaths,
                    props_attr_preset::RELEASE_WIN32_LINK);
 
         p.set_attr("AdditionalDependencies", libNames,
                    props_attr_preset::DEBUG_WIN32_LINK);
-        p.set_attr("AdditionalDependencies", libNames,
+        p.set_attr("AdditionalDependencies", libRelNames,
                    props_attr_preset::RELEASE_WIN32_LINK);
     }
     else
@@ -219,7 +227,8 @@ void MainWindow::open_global_win32_attribute_table()
         QDir dir;
         dir.mkpath(globalPropsRoot);
         p.save();
-        QMessageBox::about(this, "导入全局属性表", "已为您创建 Win32 全局属性表");
+        QMessageBox::about(this, "导入全局属性表",
+                           "已为您创建 Win32 全局属性表");
     }
 
     new_attribute_table_wdiget_by_props(p);
@@ -360,8 +369,7 @@ void MainWindow::list_sub_props_in_activate_attribute_table()
 
         if (subProps.empty())
         {
-            QMessageBox::warning(this, "列出子属性表",
-                                 "当前属性表无子属性表");
+            QMessageBox::warning(this, "列出子属性表", "当前属性表无子属性表");
             return;
         }
 
@@ -387,9 +395,9 @@ void MainWindow::add_sub_props_in_activate_attribute_table()
             return;
         }
 
-        const QString &filePath = QFileDialog::getOpenFileName(
-            this, QStringLiteral("选择属性表"), "",
-            QStringLiteral("props file(*.props)"));
+        const QString &filePath =
+            QFileDialog::getOpenFileName(this, QStringLiteral("选择属性表"), "",
+                                         QStringLiteral("props file(*.props)"));
 
         if (filePath.isEmpty())
         {
@@ -440,8 +448,8 @@ void MainWindow::remove_sub_props_in_activate_attribute_table()
 
         bool ok;
         QString sub_props_file = QInputDialog::getItem(
-            this, "删除子属性表", "请选择要删除的子属性表:", subProps, 0,
-            false, &ok);
+            this, "删除子属性表", "请选择要删除的子属性表:", subProps, 0, false,
+            &ok);
 
         if (!ok || sub_props_file.isEmpty())
         {
@@ -477,8 +485,8 @@ void MainWindow::cover_props_in_activate_attribute_table()
         }
 
         const QString &filePath = QFileDialog::getOpenFileName(
-            this, QStringLiteral("选择属性表用于覆盖当前属性表"),
-            "", QStringLiteral("props file(*.props)"));
+            this, QStringLiteral("选择属性表用于覆盖当前属性表"), "",
+            QStringLiteral("props file(*.props)"));
 
         if (!filePath.isEmpty())
         {
@@ -502,6 +510,9 @@ void MainWindow::cover_props_in_activate_attribute_table()
 
 void MainWindow::init()
 {
+    /* AD */
+    setWindowTitle(windowTitle()+"，QQ群 : 1078012714（欢迎学习交流、问题反馈、意见反馈）");
+
     /* open/create win64 global props */
     connect(ui->win64_props_action, &QAction::triggered, this,
             &MainWindow::open_global_win64_attribute_table);
@@ -531,7 +542,8 @@ void MainWindow::init()
             &MainWindow::save_as_props_in_activate_attribute_table);
 
     /* add additional dirs or deps by current props editor */
-    connect(ui->add_additional_dirs_or_deps_props_action, &QAction::triggered, this,
+    connect(ui->add_additional_dirs_or_deps_props_action, &QAction::triggered,
+            this,
             &MainWindow::
                 add_additional_dirs_or_deps_props_in_activate_attribute_table);
 

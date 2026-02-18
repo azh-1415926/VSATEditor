@@ -63,7 +63,7 @@ class attribute_table_widget : public QWidget
 
   public slots:
     void load_props(const props &p);
-    void save(bool silence = false);
+    void save(bool toSilence = false);
     void save_as(const QString &file_path, bool to_rename = true);
 
     

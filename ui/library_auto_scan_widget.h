@@ -18,9 +18,9 @@ class library_auto_scan_widget : public QWidget
     library_auto_scan_widget(QWidget *parent = nullptr);
     ~library_auto_scan_widget();
 
-    QStringList get_inc_paths();
-    QStringList get_lib_paths();
-    QStringList get_lib_names();
+    QStringList get_inc_paths(bool toDebug = true);
+    QStringList get_lib_paths(bool toDebug = true);
+    QStringList get_lib_names(bool toDebug = true);
     QString get_platform();
 
   public slots:
@@ -41,11 +41,13 @@ class library_auto_scan_widget : public QWidget
     bool is_valid_by_lib_root_dir(const QString &rootDir);
 
     void scan_stanard(const QString &rootDir);
+    void scan_opencv(const QString &rootDir);
     void scan_boost(const QString &rootDir);
     void scan_vtk(const QString &rootDir);
     void scan_pcl(const QString &rootDir);
     void scan_lib_in_vcpkg_installed(const QString &vcpkgRootDir,
                                      const QString &triplet);
+    void scan_lib_in_vcpkg_installed(const QString &rootDir);
 
     QString get_specific_inc_path(const QString &rootDir,
                                   const QString &libName = "");
