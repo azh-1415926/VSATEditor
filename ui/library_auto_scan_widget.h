@@ -25,9 +25,14 @@ class library_auto_scan_widget : public QWidget
 
   public slots:
     void scan_complete();
-    void clear();
+    void reset();
 
   private slots:
+    void appendIncPath(const QString &path, bool isDebug);
+    void appendLibPath(const QString &path, bool isDebug);
+    void appendIncPaths(const QStringList &paths, bool isDebug);
+    void appendLibPaths(const QStringList &paths, bool isDebug);
+    void appendLibNames(const QStringList &names, bool isDebug);
     void scan_library();
 
   signals:

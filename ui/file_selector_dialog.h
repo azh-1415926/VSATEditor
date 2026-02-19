@@ -30,6 +30,9 @@ class file_selector_dialog : public QDialog
                                        const QString &path);
 
   private slots:
+    void changeSlashText(const QString& slash);
+    void switchView(int i);
+    void replaceAllText();
     void single_select();
     void multi_select();
     void exit();
@@ -39,6 +42,7 @@ class file_selector_dialog : public QDialog
   private:
     Ui::file_selector_dialog *ui;
     file_selector_dialog_mode m_mode_private;
+    QString m_slash_text;
 
     void init();
 };

@@ -60,28 +60,28 @@ void MainWindow::new_attribute_table_wdiget_for_win32()
  * set title to "空白属性表" */
 void MainWindow::new_attribute_table_wdiget_by_props(const props &p)
 {
+    /* if first attribute table is empty */
+    if (ui->props_editors->count() == 1)
+    {
+        attribute_table_widget *currWidget =
+            static_cast<attribute_table_widget *>(
+                ui->props_editors->currentWidget());
+
+        if (currWidget && !currWidget->is_load() && p.is_load())
+        {
+            currWidget->load_props(p);
+            return;
+        }
+    }
+
     attribute_table_widget *w = new attribute_table_widget;
     connect(w, &attribute_table_widget::rename, this,
             &MainWindow::props_editor_rename);
     connect(w, &attribute_table_widget::exit, this,
             &MainWindow::remove_attribute_table_widget);
 
-    attribute_table_widget *currWidget = w;
-    if (ui->props_editors->count() == 1)
-    {
-        currWidget = static_cast<attribute_table_widget *>(
-            ui->props_editors->currentWidget());
-    }
-
-    if (currWidget && !currWidget->is_load() && p.is_load())
-    {
-        currWidget->load_props(p);
-    }
-    else
-    {
-        ui->props_editors->addTab(w, "");
-        w->load_props(p);
-    }
+    ui->props_editors->addTab(w, "");
+    w->load_props(p);
 }
 
 void MainWindow::new_attribute_table_wdiget_by_scanner()
@@ -150,7 +150,7 @@ void MainWindow::new_attribute_table_wdiget_by_scanner()
 
     w->set_edit_state(true);
 
-    m_library_scanner->clear();
+    m_library_scanner->reset();
 }
 
 void MainWindow::remove_attribute_table_widget()
@@ -511,7 +511,8 @@ void MainWindow::cover_props_in_activate_attribute_table()
 void MainWindow::init()
 {
     /* AD */
-    setWindowTitle(windowTitle()+"，QQ群 : 1078012714（欢迎学习交流、问题反馈、意见反馈）");
+    setWindowTitle(windowTitle() + "-v" + std2qstring(AZH_VERSION) +
+                   "，QQ群 : 1078012714（欢迎学习交流、问题反馈、意见反馈）");
 
     /* open/create win64 global props */
     connect(ui->win64_props_action, &QAction::triggered, this,

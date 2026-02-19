@@ -43,7 +43,7 @@ class MainWindow : public QMainWindow
     void save_as_props_in_activate_attribute_table();
     void add_additional_dirs_or_deps_props_in_activate_attribute_table();
 
-    /*  */
+    /* props management */
     void open_props_dir_in_activate_attribute_table();
 
     /* sub props management */

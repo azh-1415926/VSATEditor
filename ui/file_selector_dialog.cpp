@@ -4,6 +4,7 @@
 #include <QClipboard>
 #include <QFileDialog>
 #include <QListView>
+#include <QMessageBox>
 #include <QTreeView>
 
 file_selector_dialog::file_selector_dialog(
@@ -19,7 +20,14 @@ file_selector_dialog::~file_selector_dialog() {}
 
 void file_selector_dialog::init()
 {
-    ui->suffix_edit->setPlaceholderText("添加后缀(可选)");
+    connect(ui->slash_combo, &QComboBox::currentTextChanged, this,
+            &file_selector_dialog::changeSlashText);
+
+    connect(ui->view_combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &file_selector_dialog::switchView);
+
+    connect(ui->replace_btn, &QPushButton::clicked, this,
+            &file_selector_dialog::replaceAllText);
 
     connect(ui->single_btn, &QPushButton::clicked, this,
             &file_selector_dialog::single_select);
@@ -29,6 +37,10 @@ void file_selector_dialog::init()
 
     connect(ui->exit_btn, &QPushButton::clicked, this,
             &file_selector_dialog::exit);
+
+    ui->slash_combo->addItems(QStringList() << "\\" << "/" << "\\\\");
+    ui->view_combo->addItems(QStringList() << "单行视图" << "多行视图");
+    ui->view_combo->setCurrentIndex(1);
 }
 
 QStringList file_selector_dialog::getExistingDirectories(const QString &title,
@@ -51,6 +63,47 @@ QStringList file_selector_dialog::getExistingDirectories(const QString &title,
     }
 
     return folders;
+}
+
+void file_selector_dialog::changeSlashText(const QString &slash)
+{
+    m_slash_text = slash;
+}
+
+void file_selector_dialog::switchView(int i)
+{
+    switch (i)
+    {
+    case 0:
+        /* single line */
+        ui->content_edit->setText(
+            ui->content_edit->toPlainText().replace("\n", ";"));
+        break;
+
+    case 1:
+        /* multi lines */
+        ui->content_edit->setText(
+            ui->content_edit->toPlainText().replace(";", "\n"));
+        break;
+
+    default:
+        break;
+    }
+}
+
+void file_selector_dialog::replaceAllText()
+{
+    QString replaced = ui->replaced_edit->text();
+    QString replace = ui->replace_edit->text();
+    QString currText = ui->content_edit->toPlainText();
+    if (replaced.isEmpty())
+    {
+        QMessageBox::warning(this, "警告", "被替换文本不能为空");
+        return;
+    }
+
+    currText.replace(replaced, replace);
+    ui->content_edit->setText(currText);
 }
 
 void file_selector_dialog::single_select()
@@ -79,8 +132,10 @@ void file_selector_dialog::single_select()
         {
             orginalText += "\n";
         }
-        ui->content_edit->setText(orginalText + urlSelected +
-                                  ui->suffix_edit->text());
+
+        urlSelected += ui->suffix_edit->text();
+        urlSelected.replace("/", m_slash_text);
+        ui->content_edit->setText(orginalText + urlSelected);
     }
 }
 
@@ -115,6 +170,7 @@ void file_selector_dialog::multi_select()
         for (auto &url : urlsSelected)
         {
             url += suffix;
+            url.replace("/", m_slash_text);
         }
 
         ui->content_edit->setText(orginalText + urlsSelected.join("\n"));

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>450</width>
+    <width>510</width>
     <height>363</height>
    </rect>
   </property>
@@ -57,7 +57,7 @@
       </widget>
      </item>
      <item row="1" column="0" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,1,2,1,1,0">
+      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,1,2,1,1,0,0">
        <item>
         <widget class="QLabel" name="label_4">
          <property name="text">
@@ -82,6 +82,13 @@
         <widget class="QPushButton" name="scan_btn">
          <property name="text">
           <string>扫描</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="reset_btn">
+         <property name="text">
+          <string>重置</string>
          </property>
         </widget>
        </item>
