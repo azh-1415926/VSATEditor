@@ -10,6 +10,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QUrl>
+#include <QVersionNumber>
 
 #include "attribute_table_widget.h"
 #include "azh/props.h"
@@ -20,14 +21,22 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
-      m_library_scanner(new library_auto_scan_widget)
+      m_library_scanner(new library_auto_scan_widget),
+      m_updater(new auto_updater)
 {
     ui->setupUi(this);
 
     init();
+
+    m_updater->requestLatestInfo();
 }
 
-MainWindow::~MainWindow() { delete ui; }
+MainWindow::~MainWindow()
+{
+    delete ui;
+    delete m_library_scanner;
+    delete m_updater;
+}
 
 void MainWindow::props_editor_rename(attribute_table_widget *w,
                                      const QString &name)
@@ -508,6 +517,41 @@ void MainWindow::cover_props_in_activate_attribute_table()
     }
 }
 
+void MainWindow::reminder_to_update(const latest_release_info &info)
+{
+    QVersionNumber currVersion =
+        QVersionNumber::fromString(std2qstring(AZH_VERSION));
+    QVersionNumber latestVersion = QVersionNumber::fromString(info.version);
+
+    if (currVersion <= latestVersion)
+    {
+        QString str;
+        if (currVersion < latestVersion)
+        {
+            str += "<b>当前版本</b> : <span style='color:red;'>" +
+                   std2qstring(AZH_VERSION) + "</span>\n";
+            str += "<b>最新版本</b> : <span style='color:green;'>" +
+                   info.version + "</span>\n";
+            str += "<b>下载链接</b> : <span style='color:blue;'><i>" +
+                   info.url + "</i></span>\n";
+        }
+        else
+        {
+            str += "<b>当前为最新版本</b> : <span style='color:red;'>" +
+                   std2qstring(AZH_VERSION) + "</span>\n";
+        }
+
+        str += "<b>以下为更新内容</b> : \n-----------------------------\n" +
+               info.info;
+        str.replace("\n", "<br/>");
+        display_detail("获取最新版本信息", str);
+    }
+    else if (currVersion > latestVersion)
+    {
+        display_detail("获取最新版本信息", "当前为预发布版本");
+    }
+}
+
 void MainWindow::init()
 {
     /* AD */
@@ -612,6 +656,10 @@ void MainWindow::init()
     m_library_scanner->setWindowIcon(QIcon(":/res/atrribute_table.png"));
     connect(m_library_scanner, &library_auto_scan_widget::scanned, this,
             &MainWindow::new_attribute_table_wdiget_by_scanner);
+
+    /* check latest software */
+    connect(m_updater, &auto_updater::versionUpdated, this,
+            &MainWindow::reminder_to_update);
 }
 
 QString MainWindow::read_text_from_qrc(const QString &name)
@@ -626,11 +674,17 @@ void MainWindow::display_detail_from_qrc(const QString &title,
                                          const QString &name,
                                          const QString &supplement)
 {
+    QString str = read_text_from_qrc(name) + supplement;
+
+    display_detail(title, str);
+}
+
+void MainWindow::display_detail(const QString &title, const QString &str)
+{
     QMessageBox box(this);
     box.setTextInteractionFlags(Qt::TextSelectableByMouse);
     box.setWindowTitle(title);
 
-    QString str = read_text_from_qrc(name) + supplement;
     box.setDetailedText(str);
     box.setText(str);
 

@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "auto_updater.h"
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
@@ -53,6 +54,8 @@ class MainWindow : public QMainWindow
 
     void cover_props_in_activate_attribute_table();
 
+    void reminder_to_update(const latest_release_info &info);
+
   signals:
     void add_props_editor(attribute_table_widget *, const props &);
     void remove_props_editor(attribute_table_widget *);
@@ -60,11 +63,13 @@ class MainWindow : public QMainWindow
   private:
     Ui::MainWindow *ui;
     library_auto_scan_widget *m_library_scanner;
+    auto_updater *m_updater;
 
     void init();
     QString read_text_from_qrc(const QString &name);
     void display_detail_from_qrc(const QString &title, const QString &name,
                                  const QString &supplement = "");
+    void display_detail(const QString &title, const QString &str);
 };
 
 #endif // MAINWINDOW_H

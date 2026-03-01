@@ -3,9 +3,13 @@
 #include <QApplication>
 #include <QFile>
 
+#include "azh/version.hpp"
+#include "utils.hpp"
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    qApp->setApplicationVersion(std2qstring(AZH_VERSION));
 
     QFile resFile(":/res/style.qss");
     if (resFile.open(QIODevice::ReadOnly))

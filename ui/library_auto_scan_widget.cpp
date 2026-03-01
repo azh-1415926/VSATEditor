@@ -1,11 +1,11 @@
 #include "library_auto_scan_widget.h"
 #include "./ui_library_auto_scan_widget.h"
 
+#include "utils.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <filesystem>
 
-std::string qstring2std(const QString &s);
 inline QString getenvSafe(const QString &key)
 {
     const char *env = std::getenv(qstring2std(key).c_str());
@@ -37,7 +37,7 @@ library_auto_scan_widget::library_auto_scan_widget(QWidget *parent)
     init();
 }
 
-library_auto_scan_widget::~library_auto_scan_widget() {}
+library_auto_scan_widget::~library_auto_scan_widget() { delete ui; }
 
 QStringList library_auto_scan_widget::get_inc_paths(bool toDebug)
 {
@@ -274,12 +274,17 @@ void library_auto_scan_widget::scan_library()
         break;
 
     case 5:
+        /* OCCT */
+        scan_occt(rootDir);
+        break;
+
+    case 6:
         /* vcpkg */
         scan_lib_in_vcpkg_installed(rootDir, ui->platform_combo->currentText() +
                                                  "-windows");
         break;
 
-    case 6:
+    case 7:
         /* vcpkg */
         scan_lib_in_vcpkg_installed(rootDir, ui->platform_combo->currentText() +
                                                  "-windows-static");
@@ -301,13 +306,9 @@ void library_auto_scan_widget::init()
     connect(ui->ok_btn, &QPushButton::clicked, this,
             &library_auto_scan_widget::scan_complete);
 
-    QStringList libNames = {"常规库",
-                            "OpenCV",
-                            "Boost",
-                            "VTK",
-                            "PCL",
-                            "vcpkg : windows",
-                            "vcpkg : windows-static"};
+    QStringList libNames = {
+        "常规库", "OpenCV", "Boost",           "VTK",
+        "PCL",    "OCCT",   "vcpkg : windows", "vcpkg : windows-static"};
     ui->lib_combo->addItems(libNames);
 
     ui->platform_combo->addItems(QStringList() << "x64" << "x86");
@@ -405,114 +406,32 @@ void library_auto_scan_widget::scan_opencv(const QString &rootDir)
 
 void library_auto_scan_widget::scan_boost(const QString &rootDir)
 {
-    /* installed using the official installer */
-    if (is_file_or_dir_exists(rootDir + "/boost"))
-    {
-        appendIncPath(rootDir, true);
-        appendIncPath(rootDir, false);
+    QString incPath = get_boost_inc_path(rootDir);
+    appendIncPath(incPath, true);
+    appendIncPath(incPath, false);
 
-        QDir libDir(rootDir);
-        QStringList subPaths = libDir.entryList();
-        /* get lib path */
-        QString libPath;
-        for (auto dir : subPaths)
-        {
-            if (dir.contains("lib64-msvc-"))
-            {
-                libPath = rootDir + "/" + dir;
-                break;
-            }
-            else if (dir.contains("lib86-msvc-"))
-            {
-                libPath = rootDir + "/" + dir;
-                break;
-            }
-        }
+    QString libPath = get_boost_lib_path(rootDir);
+    appendLibPath(libPath, true);
+    appendLibPath(libPath, false);
 
-        appendLibPath(libPath, true);
-        appendLibPath(libPath, false);
-
-        appendLibNames(
-            get_lib_names(libPath,
-                          "-mt-gd-" + ui->platform_combo->currentText()),
-            true);
-        appendLibNames(
-            get_lib_names(libPath, "-mt-" + ui->platform_combo->currentText()),
-            false);
-    }
-    /* self compile or compiled by vcpkg */
-    else if (is_file_or_dir_exists(rootDir + "/include"))
-    {
-        appendIncPath(get_specific_inc_path(rootDir, "boost"), true);
-        appendIncPath(get_specific_inc_path(rootDir, "boost"), false);
-
-        QString libPath = get_specific_lib_path(rootDir);
-        appendLibPath(libPath, true);
-        appendLibPath(libPath, false);
-
-        QString boostDbgLibSuffix =
-            "-mt-gd-x64-" + get_specific_version(rootDir, "boost") + ".lib";
-        QString boostRelLibSuffix =
-            "-mt-x64-" + get_specific_version(rootDir, "boost") + ".lib";
-
-        QStringList boostDbgLibNames = get_lib_names(libPath, "-mt-gd.lib");
-        QStringList boostRelLibNames = get_lib_names(libPath, "-mt.lib");
-        if (boostDbgLibNames.isEmpty())
-        {
-            boostDbgLibNames = get_lib_names(libPath, boostDbgLibSuffix);
-        }
-        if (boostRelLibNames.isEmpty())
-        {
-            boostRelLibNames = get_lib_names(libPath, boostRelLibSuffix);
-        }
-
-        appendLibNames(boostDbgLibNames, true);
-        appendLibNames(boostRelLibNames, false);
-    }
+    QString version = get_specific_version(rootDir, "boost");
+    appendLibNames(get_boost_lib_names(libPath, version, true), true);
+    appendLibNames(get_boost_lib_names(libPath, version, false), false);
 }
 
 void library_auto_scan_widget::scan_vtk(const QString &rootDir)
 {
-    appendIncPath(get_specific_inc_path(rootDir, "vtk"), true);
-    appendIncPath(get_specific_inc_path(rootDir, "vtk"), false);
+    QString incPath = get_vtk_inc_path(rootDir);
+    appendIncPath(incPath, true);
+    appendIncPath(incPath, false);
 
-    QString libPath = get_specific_lib_path(rootDir);
+    QString libPath = get_vtk_lib_path(rootDir);
     appendLibPath(libPath, true);
     appendLibPath(libPath, false);
 
-    /* other lib's 3rdParty */
-    QString vtkDbgLibSuffix1 =
-        "-" + get_specific_version(rootDir, "vtk") + "-gd.lib";
-    /* vcpkg compiled */
-    QString vtkDbgLibSuffix2 =
-        "-" + get_specific_version(rootDir, "vtk") + "d.lib";
-    /* release */
-    QString vtkRelLibSuffix =
-        "-" + get_specific_version(rootDir, "vtk") + ".lib";
-
-    QStringList vtkDbgLibNames;
-    QStringList vtkRelLibNames;
-    if (is_file_or_dir_exists(rootDir + "/lib/vtkIOCore" + vtkDbgLibSuffix1))
-    {
-        vtkDbgLibNames = get_lib_names(libPath, vtkDbgLibSuffix1);
-    }
-    else if (is_file_or_dir_exists(rootDir + "/lib/vtkIOCore" +
-                                   vtkDbgLibSuffix2))
-    {
-        vtkDbgLibNames = get_lib_names(libPath, vtkDbgLibSuffix2);
-    }
-
-    if (is_file_or_dir_exists(rootDir + "/lib/vtkIOCore" + vtkRelLibSuffix))
-    {
-        vtkRelLibNames = get_lib_names(libPath, vtkRelLibSuffix);
-        if (vtkDbgLibNames.isEmpty())
-        {
-            vtkDbgLibNames = vtkRelLibNames;
-        }
-    }
-
-    appendLibNames(vtkDbgLibNames, true);
-    appendLibNames(vtkRelLibNames, false);
+    QString version = get_specific_version(rootDir, "vtk");
+    appendLibNames(get_vtk_lib_names(libPath, version, true), true);
+    appendLibNames(get_vtk_lib_names(libPath, version, false), false);
 }
 
 void library_auto_scan_widget::scan_pcl(const QString &rootDir)
@@ -607,32 +526,21 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
     }
 
     /* Boost */
-    QString boostDbgLibSuffix =
-        "-mt-gd-x64-" +
-        get_specific_version(rootDir + "/3rdParty/Boost", "boost") + ".lib";
-    QString boostRelLibSuffix =
-        "-mt-x64-" +
-        get_specific_version(rootDir + "/3rdParty/Boost", "boost") + ".lib";
+    QString boostVersion =
+        get_specific_version(rootDir + "/3rdParty/Boost", "boost");
 
-    QStringList boostDbgLibNames =
-        get_lib_names(rootDir + "/3rdParty/Boost/lib", boostDbgLibSuffix);
-    QStringList boostRelLibNames =
-        get_lib_names(rootDir + "/3rdParty/Boost/lib", boostRelLibSuffix);
-
-    libDbgNames.append(boostDbgLibNames);
-    libRelNames.append(boostRelLibNames);
+    libDbgNames.append(get_boost_lib_names(rootDir + "/3rdParty/Boost/lib",
+                                           boostVersion, true));
+    libRelNames.append(get_boost_lib_names(rootDir + "/3rdParty/Boost/lib",
+                                           boostVersion, false));
 
     /* VTK */
-    QString vtkDbgLibSuffix =
-        "-" + get_specific_version(rootDir + "/3rdParty/VTK", "vtk") +
-        "-gd.lib";
-    QString vtkRelLibSuffix =
-        "-" + get_specific_version(rootDir + "/3rdParty/VTK", "vtk") + ".lib";
+    QString vtkVersion = get_specific_version(rootDir + "/3rdParty/VTK", "vtk");
 
     libDbgNames.append(
-        get_lib_names(rootDir + "/3rdParty/VTK/lib", vtkDbgLibSuffix));
+        get_vtk_lib_names(rootDir + "/3rdParty/VTK/lib", vtkVersion, true));
     libRelNames.append(
-        get_lib_names(rootDir + "/3rdParty/VTK/lib", vtkRelLibSuffix));
+        get_vtk_lib_names(rootDir + "/3rdParty/VTK/lib", vtkVersion, false));
 
     /* flann */
     if (is_file_or_dir_exists(rootDir + "/3rdParty/FLANN/lib/flann-gd.lib"))
@@ -700,6 +608,47 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
     appendLibPaths(libPaths, false);
     appendLibNames(libDbgNames, true);
     appendLibNames(libRelNames, false);
+}
+
+void library_auto_scan_widget::scan_occt(const QString &rootDir)
+{
+    QString incPath = get_specific_inc_path(rootDir);
+    appendIncPath(incPath, true);
+    appendIncPath(incPath, false);
+
+    QString dbgLibPath;
+    QString relLibPath;
+    if (ui->platform_combo->currentText() == "x64" &&
+        is_file_or_dir_exists(rootDir + "/win64/"))
+    {
+        QDir libDir(rootDir + "/win64");
+        auto eil = libDir.entryInfoList();
+
+        for (auto e : eil)
+        {
+            if (e.isDir())
+            {
+                if (is_file_or_dir_exists(e.filePath() + "/libd"))
+                {
+                    dbgLibPath = e.filePath() + "/libd";
+                }
+                if (is_file_or_dir_exists(e.filePath() + "/lib"))
+                {
+                    relLibPath = e.filePath() + "/lib";
+                }
+
+                if (dbgLibPath.isEmpty())
+                {
+                    dbgLibPath = relLibPath;
+                }
+            }
+        }
+    }
+
+    appendLibPath(dbgLibPath, true);
+    appendLibPath(relLibPath, false);
+    appendLibNames(get_lib_names(dbgLibPath), true);
+    appendLibNames(get_lib_names(relLibPath), false);
 }
 
 void library_auto_scan_widget::scan_lib_in_vcpkg_installed(
@@ -830,4 +779,133 @@ QStringList library_auto_scan_widget::get_lib_names(const QString &libPath,
     }
 
     return libs;
+}
+
+QString library_auto_scan_widget::get_boost_inc_path(const QString &rootDir)
+{
+    QString incPath;
+    /* installed using the official installer */
+    if (is_file_or_dir_exists(rootDir + "/boost"))
+    {
+        incPath = rootDir;
+    }
+    /* self compile or compiled by vcpkg */
+    else if (is_file_or_dir_exists(rootDir + "/include"))
+    {
+
+        incPath = get_specific_inc_path(rootDir, "boost");
+    }
+
+    return incPath;
+}
+
+QString library_auto_scan_widget::get_boost_lib_path(const QString &rootDir)
+{
+    QString libPath;
+    /* installed using the official installer */
+    if (is_file_or_dir_exists(rootDir + "/boost"))
+    {
+        QDir libDir(rootDir);
+        QStringList subPaths = libDir.entryList();
+        /* get lib path */
+        for (auto dir : subPaths)
+        {
+            if (dir.contains("lib64-msvc-"))
+            {
+                libPath = rootDir + "/" + dir;
+                break;
+            }
+            else if (dir.contains("lib86-msvc-"))
+            {
+                libPath = rootDir + "/" + dir;
+                break;
+            }
+        }
+    }
+    /* self compile or compiled by vcpkg */
+    else if (is_file_or_dir_exists(rootDir + "/include"))
+    {
+        libPath = get_specific_lib_path(rootDir);
+    }
+
+    return libPath;
+}
+
+QStringList library_auto_scan_widget::get_boost_lib_names(
+    const QString &libPath, const QString &version, bool isDebug)
+{
+    QString platform = ui->platform_combo->currentText();
+    QStringList dbgFliters = {"-mt-gd.lib", "-mt-gd-" + platform,
+                              "-mt-gd-" + platform + "-" + version + ".lib",
+                              "-mt-gd-" + version + ".lib"};
+
+    QStringList relFliters = {"-mt.lib", "-mt-" + platform,
+                              "-mt-" + platform + "-" + version + ".lib",
+                              "-mt-" + version + ".lib"};
+
+    QStringList libNames;
+    QStringList filters;
+
+    if (isDebug)
+    {
+        filters = dbgFliters;
+    }
+    else
+    {
+        filters = relFliters;
+    }
+
+    for (const QString &filter : filters)
+    {
+        libNames = get_lib_names(libPath, filter);
+        if (!libNames.isEmpty())
+        {
+            break;
+        }
+    }
+
+    return libNames;
+}
+
+QString library_auto_scan_widget::get_vtk_inc_path(const QString &rootDir)
+{
+    return get_specific_inc_path(rootDir, "vtk");
+}
+
+QString library_auto_scan_widget::get_vtk_lib_path(const QString &rootDir)
+{
+    return is_file_or_dir_exists(rootDir + "/lib") ? rootDir + "/lib" : "";
+}
+
+QStringList library_auto_scan_widget::get_vtk_lib_names(const QString &libPath,
+                                                        const QString &version,
+                                                        bool isDebug)
+{
+    QStringList dbgFliters = {"-" + version + "-gd.lib",
+                              "-" + version + "d.lib"};
+
+    QStringList relFliters = {"-" + version + ".lib"};
+
+    QStringList libNames;
+    QStringList filters;
+
+    if (isDebug)
+    {
+        filters = dbgFliters;
+    }
+    else
+    {
+        filters = relFliters;
+    }
+
+    for (const QString &filter : filters)
+    {
+        libNames = get_lib_names(libPath, filter);
+        if (!libNames.isEmpty())
+        {
+            break;
+        }
+    }
+
+    return libNames;
 }

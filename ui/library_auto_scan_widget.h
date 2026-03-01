@@ -50,6 +50,7 @@ class library_auto_scan_widget : public QWidget
     void scan_boost(const QString &rootDir);
     void scan_vtk(const QString &rootDir);
     void scan_pcl(const QString &rootDir);
+    void scan_occt(const QString &rootDir);
     void scan_lib_in_vcpkg_installed(const QString &vcpkgRootDir,
                                      const QString &triplet);
     void scan_lib_in_vcpkg_installed(const QString &rootDir);
@@ -61,6 +62,18 @@ class library_auto_scan_widget : public QWidget
     QString get_specific_lib_path(const QString &rootDir);
     QStringList get_lib_names(const QString &libPath,
                               const QString &filter = "");
+
+    /* boost */
+    QString get_boost_inc_path(const QString &rootDir);
+    QString get_boost_lib_path(const QString &rootDir);
+    QStringList get_boost_lib_names(const QString &libPath,
+                                    const QString &version, bool isDebug);
+
+    /* vtk */
+    QString get_vtk_inc_path(const QString &rootDir);
+    QString get_vtk_lib_path(const QString &rootDir);
+    QStringList get_vtk_lib_names(const QString &libPath,
+                                    const QString &version, bool isDebug);
 };
 
 #endif // LIB_AUTO_SCAN_WIDGET_H

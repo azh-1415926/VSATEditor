@@ -16,15 +16,15 @@ file_selector_dialog::file_selector_dialog(
     init();
 }
 
-file_selector_dialog::~file_selector_dialog() {}
+file_selector_dialog::~file_selector_dialog() { delete ui; }
 
 void file_selector_dialog::init()
 {
     connect(ui->slash_combo, &QComboBox::currentTextChanged, this,
             &file_selector_dialog::changeSlashText);
 
-    connect(ui->view_combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            &file_selector_dialog::switchView);
+    connect(ui->view_combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &file_selector_dialog::switchView);
 
     connect(ui->replace_btn, &QPushButton::clicked, this,
             &file_selector_dialog::replaceAllText);
