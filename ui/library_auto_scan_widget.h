@@ -54,6 +54,7 @@ class library_auto_scan_widget : public QWidget
     void scan_lib_in_vcpkg_installed(const QString &vcpkgRootDir,
                                      const QString &triplet);
     void scan_lib_in_vcpkg_installed(const QString &rootDir);
+    void scan_win_sdk();
 
     QString get_specific_inc_path(const QString &rootDir,
                                   const QString &libName = "");

@@ -1,9 +1,13 @@
 #include "library_auto_scan_widget.h"
 #include "./ui_library_auto_scan_widget.h"
 
+#include "azh/utils/logger.hpp"
+#include "constants.hpp"
 #include "utils.hpp"
+
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QSettings>
 #include <filesystem>
 
 inline QString getenvSafe(const QString &key)
@@ -25,6 +29,10 @@ inline QString getenvSafe(const QString &key)
 #endif
         }
     }
+
+    aDebug(AZH_INFO, LOG_NAME)
+        << "Execute function getenvSafe(" << qstring2std(key)
+        << ") : " << qstring2std(envStr) << ".";
 
     return envStr;
 }
@@ -230,69 +238,90 @@ void library_auto_scan_widget::scan_library()
         return;
     }
 
-    QString rootDir = QFileDialog::getExistingDirectory(this, "选择库根路径",
-                                                        QDir::currentPath());
+    int currLibraryIndex = ui->lib_combo->currentIndex();
+    QString rootDir;
 
-    if (rootDir.isEmpty())
+    if (currLibraryIndex < 8)
     {
-        QMessageBox::warning(this, "扫描库", "未选择需要扫描的库");
-        return;
+        rootDir = QFileDialog::getExistingDirectory(this, "选择库根路径",
+                                                    QDir::currentPath());
+        if (rootDir.isEmpty())
+        {
+            QMessageBox::warning(this, "扫描库", "未选择需要扫描的库");
+            return;
+        }
+
+        if (!is_valid_by_lib_root_dir(rootDir))
+        {
+            QMessageBox::warning(this, "扫描库",
+                                 "请选择库的根路径，该路径不符合要求");
+            return;
+        }
     }
 
-    if (!is_valid_by_lib_root_dir(rootDir))
-    {
-        QMessageBox::warning(this, "扫描库",
-                             "请选择库的根路径，该路径不符合要求");
-        return;
-    }
-
-    switch (ui->lib_combo->currentIndex())
+    switch (currLibraryIndex)
     {
     case 0:
         /* Standard */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan stanard library.";
         scan_stanard(rootDir);
         break;
 
     case 1:
         /* OpenCV */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan OpenCV.";
         scan_opencv(rootDir);
         break;
 
     case 2:
         /* Boost */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan Boost.";
         scan_boost(rootDir);
         break;
 
     case 3:
         /* VTK */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan VTK.";
         scan_vtk(rootDir);
         break;
 
     case 4:
         /* PCL */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan PCL.";
         scan_pcl(rootDir);
         break;
 
     case 5:
         /* OCCT */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan OpenCasCade.";
         scan_occt(rootDir);
         break;
 
     case 6:
         /* vcpkg */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan library in vcpkg.";
         scan_lib_in_vcpkg_installed(rootDir, ui->platform_combo->currentText() +
                                                  "-windows");
         break;
 
     case 7:
         /* vcpkg */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan static library in vcpkg.";
         scan_lib_in_vcpkg_installed(rootDir, ui->platform_combo->currentText() +
                                                  "-windows-static");
+        break;
+
+    case 8:
+        /* win sdk */
+        aDebug(AZH_INFO, LOG_NAME) << "Scan windows kits 10.";
+        scan_win_sdk();
         break;
 
     default:
         break;
     }
+
+    aDebug(AZH_INFO, LOG_NAME) << "Scan complete.";
 }
 
 void library_auto_scan_widget::init()
@@ -307,8 +336,9 @@ void library_auto_scan_widget::init()
             &library_auto_scan_widget::scan_complete);
 
     QStringList libNames = {
-        "常规库", "OpenCV", "Boost",           "VTK",
-        "PCL",    "OCCT",   "vcpkg : windows", "vcpkg : windows-static"};
+        "常规库",      "OpenCV", "Boost",           "VTK",
+        "PCL",         "OCCT",   "vcpkg : windows", "vcpkg : windows-static",
+        "Windows Kits"};
     ui->lib_combo->addItems(libNames);
 
     ui->platform_combo->addItems(QStringList() << "x64" << "x86");
@@ -364,6 +394,7 @@ void library_auto_scan_widget::scan_opencv(const QString &rootDir)
     {
         QMessageBox::warning(this, "扫描库",
                              "无法找到 opencv 的 " + platform + " 库");
+        aDebug(AZH_ERROR, LOG_NAME) << "Scan OpenCV failed.";
         return;
     }
 
@@ -415,6 +446,8 @@ void library_auto_scan_widget::scan_boost(const QString &rootDir)
     appendLibPath(libPath, false);
 
     QString version = get_specific_version(rootDir, "boost");
+    aDebug(AZH_INFO, LOG_NAME)
+        << "Get boost version : " << qstring2std(version) << ".";
     appendLibNames(get_boost_lib_names(libPath, version, true), true);
     appendLibNames(get_boost_lib_names(libPath, version, false), false);
 }
@@ -430,6 +463,8 @@ void library_auto_scan_widget::scan_vtk(const QString &rootDir)
     appendLibPath(libPath, false);
 
     QString version = get_specific_version(rootDir, "vtk");
+    aDebug(AZH_INFO, LOG_NAME)
+        << "Get vtk version : " << qstring2std(version) << ".";
     appendLibNames(get_vtk_lib_names(libPath, version, true), true);
     appendLibNames(get_vtk_lib_names(libPath, version, false), false);
 }
@@ -437,6 +472,18 @@ void library_auto_scan_widget::scan_vtk(const QString &rootDir)
 void library_auto_scan_widget::scan_pcl(const QString &rootDir)
 {
     /* 3rdParty -> Boost、VTK、FLANN、Qhull、OpenNI2、Eigen */
+
+    QString version = get_specific_version(rootDir, "pcl");
+    aDebug(AZH_INFO, LOG_NAME)
+        << "Get pcl version : " << qstring2std(version) << ".";
+    aDebug(AZH_INFO, LOG_NAME) << "Get boost version : "
+                               << qstring2std(get_specific_version(
+                                      rootDir + "/3rdParty/Boost", "boost"))
+                               << ".";
+    aDebug(AZH_INFO, LOG_NAME)
+        << "Get vtk version : "
+        << qstring2std(get_specific_version(rootDir + "/3rdParty/VTK", "vtk"))
+        << ".";
 
     /* inc path */
     QStringList incPaths;
@@ -469,14 +516,15 @@ void library_auto_scan_widget::scan_pcl(const QString &rootDir)
         openNI2LibPath = rootDir + "/3rdParty/OpenNI2/Lib";
     }
 
-    /* Eigen3 */
+    /* pcl version >= 1.14.1 */
     if (is_file_or_dir_exists(rootDir + "/3rdParty/Eigen3/include/eigen3"))
     {
         incPaths.push_back(rootDir + "/3rdParty/Eigen3/include/eigen3");
     }
-    else if (is_file_or_dir_exists(rootDir + "/3rdParty/Eigen3/eigen3"))
+    /* pcl version between 1.8.1 and 1.14.1 */
+    else if (is_file_or_dir_exists(rootDir + "/3rdParty/Eigen/eigen3"))
     {
-        incPaths.push_back(rootDir + "/3rdParty/Eigen3/eigen3");
+        incPaths.push_back(rootDir + "/3rdParty/Eigen/eigen3");
     }
 
     /* OpenNI2 inc */
@@ -666,6 +714,48 @@ void library_auto_scan_widget::scan_lib_in_vcpkg_installed(
     appendLibPath(rootDir + "/lib", false);
     appendLibNames(get_lib_names(rootDir + "/debug/lib"), true);
     appendLibNames(get_lib_names(rootDir + "/lib"), false);
+}
+
+void library_auto_scan_widget::scan_win_sdk()
+{
+    QSettings setting(
+        "HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows "
+        "Kits\\Installed Roots",
+        QSettings::NativeFormat);
+    QString sdkRoot = setting.value("KitsRoot10", "default").toString();
+    sdkRoot.replace("\\", "/");
+
+    QString sdkVersion;
+    QDir dir(sdkRoot + "/Include");
+    for (auto e : dir.entryList())
+    {
+        if (e.contains("10."))
+        {
+            sdkVersion = e;
+            break;
+        }
+    }
+
+    QString incPath = sdkRoot + "/Include/" + sdkVersion;
+    if (is_file_or_dir_exists(incPath))
+    {
+        QStringList incPaths = {incPath + "/shared", incPath + "/ucrt",
+                                incPath + "/um"};
+
+        appendIncPaths(incPaths, true);
+        appendIncPaths(incPaths, false);
+    }
+
+    QString libPath = sdkRoot + "/Lib/" + sdkVersion;
+    if (is_file_or_dir_exists(libPath))
+    {
+        QString platform = ui->platform_combo->currentText();
+        QStringList libPaths = {libPath + "/ucrt/" + platform,
+                                libPath + "/um/" + platform};
+
+        appendLibPaths(libPaths, true);
+        appendLibPaths(libPaths, false);
+    }
 }
 
 QString library_auto_scan_widget::get_specific_inc_path(const QString &rootDir,

@@ -30,11 +30,11 @@ class auto_updater : public QObject
     ~auto_updater();
 
   public slots:
-    void requestLatestInfo();
-    void handleLatestInfo(QNetworkReply *reply);
+    void request_latest_info();
+    void handle_latest_info(QNetworkReply *reply);
 
   signals:
-    void versionUpdated(const latest_release_info &info);
+    void version_updated(const latest_release_info &info);
 
   private:
     QNetworkAccessManager *m_network_manager;

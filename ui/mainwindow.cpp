@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     init();
 
-    m_updater->requestLatestInfo();
+    m_updater->request_latest_info();
 }
 
 MainWindow::~MainWindow()
@@ -132,6 +132,7 @@ void MainWindow::new_attribute_table_wdiget_by_scanner()
     }
     else if (m_library_scanner->get_platform() == "x86")
     {
+        p = props(1);
         p.set_attr("AdditionalIncludeDirectories", incPaths,
                    props_attr_preset::DEBUG_WIN32_CLCOMPILE);
         p.set_attr("AdditionalIncludeDirectories", incRelPaths,
@@ -658,7 +659,7 @@ void MainWindow::init()
             &MainWindow::new_attribute_table_wdiget_by_scanner);
 
     /* check latest software */
-    connect(m_updater, &auto_updater::versionUpdated, this,
+    connect(m_updater, &auto_updater::version_updated, this,
             &MainWindow::reminder_to_update);
 }
 

@@ -1,7 +1,9 @@
 #include "auto_updater.h"
 #include "azh/utils/logger.hpp"
 
+#include "constants.hpp"
 #include "utils.hpp"
+
 #include <QJsonObject>
 #include <QJsonParseError>
 
@@ -11,7 +13,7 @@ QJsonObject str2json(const QString &str)
     QJsonDocument doc = QJsonDocument::fromJson(str.toUtf8(), &error);
     if (error.error != QJsonParseError::NoError && !doc.isNull())
     {
-        aDebug(AZH_ERROR) << "json parse error!";
+        aDebug(AZH_ERROR, LOG_NAME) << "json parse error!";
         return QJsonObject();
     }
 
@@ -26,8 +28,10 @@ auto_updater::auto_updater(QObject *parent)
 
 auto_updater::~auto_updater() { delete m_network_manager; }
 
-void auto_updater::requestLatestInfo()
+void auto_updater::request_latest_info()
 {
+    aDebug(AZH_INFO, LOG_NAME) << "try to request info for latest release.";
+
     QNetworkRequest request;
     request.setUrl(QUrl(
         "https://api.github.com/repos/azh-1415926/VSATEditor/releases/latest"));
@@ -38,10 +42,10 @@ void auto_updater::requestLatestInfo()
     m_network_manager->get(request);
 }
 
-void auto_updater::handleLatestInfo(QNetworkReply *reply)
+void auto_updater::handle_latest_info(QNetworkReply *reply)
 {
     disconnect(m_network_manager, &QNetworkAccessManager::finished, this,
-               &auto_updater::handleLatestInfo);
+               &auto_updater::handle_latest_info);
 
     QString str = reply->readAll();
     QJsonObject json = str2json(str);
@@ -52,11 +56,14 @@ void auto_updater::handleLatestInfo(QNetworkReply *reply)
     /* body, latest info */
     QString body = json.value("body").toString();
 
+    aDebug(AZH_INFO, LOG_NAME)
+        << "The latest release's version : " << qstring2std(tag_name) << ".";
+
     latest_release_info info(html_url, tag_name, body);
 
     if (!html_url.isEmpty() || !tag_name.isEmpty() || !body.isEmpty())
     {
-        emit versionUpdated(info);
+        emit version_updated(info);
     }
 
     reply->deleteLater();
@@ -65,5 +72,5 @@ void auto_updater::handleLatestInfo(QNetworkReply *reply)
 void auto_updater::init()
 {
     connect(m_network_manager, &QNetworkAccessManager::finished, this,
-            &auto_updater::handleLatestInfo);
+            &auto_updater::handle_latest_info);
 }

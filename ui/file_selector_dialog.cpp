@@ -21,13 +21,13 @@ file_selector_dialog::~file_selector_dialog() { delete ui; }
 void file_selector_dialog::init()
 {
     connect(ui->slash_combo, &QComboBox::currentTextChanged, this,
-            &file_selector_dialog::changeSlashText);
+            &file_selector_dialog::change_slash_text);
 
     connect(ui->view_combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &file_selector_dialog::switchView);
+            this, &file_selector_dialog::switch_view_to);
 
     connect(ui->replace_btn, &QPushButton::clicked, this,
-            &file_selector_dialog::replaceAllText);
+            &file_selector_dialog::replace_all_text);
 
     connect(ui->single_btn, &QPushButton::clicked, this,
             &file_selector_dialog::single_select);
@@ -65,12 +65,12 @@ QStringList file_selector_dialog::getExistingDirectories(const QString &title,
     return folders;
 }
 
-void file_selector_dialog::changeSlashText(const QString &slash)
+void file_selector_dialog::change_slash_text(const QString &slash)
 {
     m_slash_text = slash;
 }
 
-void file_selector_dialog::switchView(int i)
+void file_selector_dialog::switch_view_to(int i)
 {
     switch (i)
     {
@@ -91,7 +91,7 @@ void file_selector_dialog::switchView(int i)
     }
 }
 
-void file_selector_dialog::replaceAllText()
+void file_selector_dialog::replace_all_text()
 {
     QString replaced = ui->replaced_edit->text();
     QString replace = ui->replace_edit->text();
