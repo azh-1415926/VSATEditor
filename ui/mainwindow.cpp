@@ -16,8 +16,10 @@
 #include "azh/props.h"
 #include "azh/utils/logger.hpp"
 #include "azh/version.hpp"
+#include "cmake_tool_dialog.h"
 #include "file_selector_dialog.h"
 #include "library_auto_scan_widget.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
@@ -292,6 +294,14 @@ void MainWindow::open_multi_function_selector()
 }
 
 void MainWindow::open_library_auto_scanner() { m_library_scanner->show(); }
+
+void MainWindow::open_cmake_tool_dialog()
+{
+    cmake_tool_dialog dlg;
+    dlg.setWindowIcon(QIcon(":/res/atrribute_table.png"));
+    dlg.resize(600, 400);
+    dlg.exec();
+}
 
 void MainWindow::save_props_in_activate_attribute_table()
 {
@@ -617,11 +627,18 @@ void MainWindow::init()
     connect(ui->cover_props_action, &QAction::triggered, this,
             &MainWindow::cover_props_in_activate_attribute_table);
 
-    connect(ui->multi_function_selector_action, &QAction::triggered, this,
-            &MainWindow::open_multi_function_selector);
+    /* add tool menu's actions */
+    QAction *multi_function_selector_action =
+        ui->menu_3->addAction("辅助选择框");
+    QAction *scan_lib_action = ui->menu_3->addAction("扫描常见库");
+    QAction *cmake_tool_action = ui->menu_3->addAction("cmake辅助工具");
 
-    connect(ui->scan_lib_action, &QAction::triggered, this,
+    connect(multi_function_selector_action, &QAction::triggered, this,
+            &MainWindow::open_multi_function_selector);
+    connect(scan_lib_action, &QAction::triggered, this,
             &MainWindow::open_library_auto_scanner);
+    connect(cmake_tool_action, &QAction::triggered, this,
+            &MainWindow::open_cmake_tool_dialog);
 
     /* links */
     connect(ui->links_action, &QAction::triggered, this,

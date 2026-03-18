@@ -101,8 +101,6 @@
     <property name="title">
      <string>工具</string>
     </property>
-    <addaction name="multi_function_selector_action"/>
-    <addaction name="scan_lib_action"/>
    </widget>
    <addaction name="file_menu"/>
    <addaction name="props_menu"/>
@@ -209,16 +207,6 @@
   <action name="qt_cmake_template_action">
    <property name="text">
     <string>Qt</string>
-   </property>
-  </action>
-  <action name="multi_function_selector_action">
-   <property name="text">
-    <string>辅助选择框</string>
-   </property>
-  </action>
-  <action name="scan_lib_action">
-   <property name="text">
-    <string>扫描常见库</string>
    </property>
   </action>
   <action name="new_win32_props_action">

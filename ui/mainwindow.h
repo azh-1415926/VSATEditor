@@ -38,6 +38,7 @@ class MainWindow : public QMainWindow
 
     void open_multi_function_selector();
     void open_library_auto_scanner();
+    void open_cmake_tool_dialog();
 
     /* file action menu */
     void save_props_in_activate_attribute_table();
