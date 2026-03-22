@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QLabel>
 #include <QMessageBox>
 #include <QUrl>
 #include <QVersionNumber>
@@ -19,7 +20,6 @@
 #include "tools/cmake_tool_dialog.h"
 #include "tools/file_selector_dialog.h"
 #include "tools/library_auto_scan_widget.h"
-
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow),
@@ -534,41 +534,46 @@ void MainWindow::reminder_to_update(const latest_release_info &info)
         QVersionNumber::fromString(std2qstring(AZH_VERSION));
     QVersionNumber latestVersion = QVersionNumber::fromString(info.version);
 
+    QLabel *labelOfVersion = new QLabel(this);
+    QLabel *labelOfUpdateLink = new QLabel(this);
+    labelOfUpdateLink->setText(
+        tr("<a "
+           "href=\"https://github.com/azh-1415926/VSATEditor/releases/"
+           "latest\">最新下载链接</a>"));
+    labelOfUpdateLink->setOpenExternalLinks(true);
+
     if (currVersion <= latestVersion)
     {
-        QString str;
         if (currVersion < latestVersion)
         {
-            str += "<b>当前版本</b> : <span style='color:red;'>" +
-                   std2qstring(AZH_VERSION) + "</span>\n";
-            str += "<b>最新版本</b> : <span style='color:green;'>" +
-                   info.version + "</span>\n";
-            str += "<b>下载链接</b> : <span style='color:blue;'><i>" +
-                   info.url + "</i></span>\n";
+            labelOfVersion->setText("当前版本 : <font color='red'>" +
+                                    std2qstring(AZH_VERSION) +
+                                    "</font> 最新版本 : <font color='green'>" +
+                                    info.version + "</font>");
+
+            ui->statusbar->showMessage(
+                "更新内容 : " + info.info.left(40) + "...", 5000);
         }
         else
         {
-            str += "<b>当前为最新版本</b> : <span style='color:red;'>" +
-                   std2qstring(AZH_VERSION) + "</span>\n";
+            labelOfVersion->setText("当前版本 : <font color='green'>" +
+                                    std2qstring(AZH_VERSION) +
+                                    "</font> 已为最新版本");
+            ui->statusbar->addPermanentWidget(labelOfVersion);
         }
-
-        str += "<b>以下为更新内容</b> : \n-----------------------------\n" +
-               info.info;
-        str.replace("\n", "<br/>");
-        display_detail("获取最新版本信息", str);
     }
     else if (currVersion > latestVersion)
     {
-        display_detail("获取最新版本信息", "当前为预发布版本");
+        labelOfVersion->setText("预发布版本 : <font color='green'>" +
+                                std2qstring(AZH_VERSION) + "</font>");
     }
+
+    ui->statusbar->addPermanentWidget(labelOfVersion);
+    ui->statusbar->addPermanentWidget(labelOfUpdateLink);
 }
 
 void MainWindow::init()
 {
-    /* AD */
-    setWindowTitle(windowTitle() + "-v" + std2qstring(AZH_VERSION) +
-                   "，QQ群 : 1078012714（欢迎学习交流、问题反馈、意见反馈）");
-
     /* open/create win64 global props */
     connect(ui->win64_props_action, &QAction::triggered, this,
             &MainWindow::open_global_win64_attribute_table);
