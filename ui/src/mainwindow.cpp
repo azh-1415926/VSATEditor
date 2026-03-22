@@ -16,9 +16,9 @@
 #include "azh/props.h"
 #include "azh/utils/logger.hpp"
 #include "azh/version.hpp"
-#include "cmake_tool_dialog.h"
-#include "file_selector_dialog.h"
-#include "library_auto_scan_widget.h"
+#include "tools/cmake_tool_dialog.h"
+#include "tools/file_selector_dialog.h"
+#include "tools/library_auto_scan_widget.h"
 
 
 MainWindow::MainWindow(QWidget *parent)

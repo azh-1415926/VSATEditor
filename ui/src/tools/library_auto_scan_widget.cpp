@@ -1,4 +1,4 @@
-#include "library_auto_scan_widget.h"
+#include "tools/library_auto_scan_widget.h"
 #include "./ui_library_auto_scan_widget.h"
 
 #include "azh/utils/logger.hpp"

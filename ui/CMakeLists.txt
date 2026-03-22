@@ -16,8 +16,8 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network)
 
 # 搜寻源文件
-file(GLOB_RECURSE incs ${CMAKE_CURRENT_LIST_DIR}/*.h*)
-file(GLOB_RECURSE srcs ${CMAKE_CURRENT_LIST_DIR}/*.c*)
+file(GLOB_RECURSE incs ${CMAKE_CURRENT_LIST_DIR}/include/*.h*)
+file(GLOB_RECURSE srcs ${CMAKE_CURRENT_LIST_DIR}/src/*.c* main.cpp)
 file(GLOB_RECURSE qrcs ${CMAKE_CURRENT_LIST_DIR}/*.qrc)
 
 # ui 文件路径
@@ -56,6 +56,7 @@ else()
     endif()
 endif()
 
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network ExternalLib)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

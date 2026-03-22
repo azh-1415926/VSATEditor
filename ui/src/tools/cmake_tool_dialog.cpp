@@ -1,4 +1,4 @@
-#include "cmake_tool_dialog.h"
+#include "tools/cmake_tool_dialog.h"
 #include "./ui_cmake_tool_dialog.h"
 
 #include <QClipboard>

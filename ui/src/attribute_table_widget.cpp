@@ -9,7 +9,7 @@
 #include "./ui_attribute_table_widget.h"
 #include "azh/props.h"
 
-#include "file_selector_dialog.h"
+#include "tools/file_selector_dialog.h"
 
 /* list editable attributes by default */
 static QList<QPair<QString, QString>> global_default_attributes = {

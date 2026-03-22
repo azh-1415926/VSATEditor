@@ -1,4 +1,4 @@
-#include "file_selector_dialog.h"
+#include "tools/file_selector_dialog.h"
 #include "./ui_file_selector_dialog.h"
 
 #include <QClipboard>
