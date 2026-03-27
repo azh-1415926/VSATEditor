@@ -1,5 +1,9 @@
-本软件用于导入、编辑、导出 VS 属性表,欢迎各位提建议
-QQ群 : 1078012714（欢迎学习交流、问题反馈、意见反馈）
+本程序用于导入、编辑、导出 VS 属性表,欢迎各位提建议(QQ群:1078012714)
+
+源代码已在 Github 开源，使用了以下开源组件：
+- pugixml (https://pugixml.org) – MIT License
+- Qt (https://www.qt.io) – GNU GPLv3
+
 [Auth] : azh
 [Link] : https://github.com/azh-1415926/VSATEditor
 [Ver.] : 

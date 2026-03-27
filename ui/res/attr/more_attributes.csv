@@ -1,0 +1,11 @@
+C/C++ 预处理宏定义,ClCompile|PreprocessorDefinitions,传递给编译器的宏定义
+C/C++ 附加包含目录,ClCompile|AdditionalIncludeDirectories,额外头文件的目录
+C/C++ 其他选项,ClCompile|AdditionalOptions,传递给编译器的编译参数
+C/C++ C语言标准,ClCompile|LanguageStandard_C,C语言标准，默认为旧MSVC，可改为stdc17
+C/C++ C++语言标准,ClCompile|LanguageStandard,C++语言标准，默认为 stdcpp14
+C/C++ SDL检查,ClCompile|SDLCheck,SDL检查，gmp库建议关闭SDL检查，true 或者 false
+C/C++ 安全检查,ClCompile|BufferSecurityCheck,C/C++安全检查，true 或者 false
+C/C++ 符合模式,ClCompile|ConformanceMode,即 permissive，true 或者 false
+链接器 附加库目录,Link|AdditionalLibraryDirectories,额外库文件的目录
+链接器 附加依赖项,Link|AdditionalDependencies,额外库文件
+链接器 其他选项,Link|AdditionalOptions,传递给链接器的编译参数

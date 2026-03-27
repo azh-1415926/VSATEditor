@@ -4,8 +4,8 @@
 #include <QMap>
 #include <QWidget>
 
-#include "utils.hpp"
 #include "azh/props.h"
+#include "utils.hpp"
 
 class QListWidgetItem;
 
@@ -67,7 +67,6 @@ class attribute_table_widget : public QWidget
     void save(bool toSilence = false);
     void save_as(const QString &file_path, bool to_rename = true);
 
-    
     void attr_item_clicked(QListWidgetItem *item);
     void configuration_changed(const QString &conf);
     void platform_changed(const QString &platform);
@@ -77,6 +76,8 @@ class attribute_table_widget : public QWidget
     void exit_without_saving();
     void save_as_btn_clicked();
     void add_path_btn_clicked();
+
+    void resetAttrs(bool needMoreAttrs = false);
 
   signals:
     void rename(attribute_table_widget *, const QString &);
@@ -100,10 +101,15 @@ class attribute_table_widget : public QWidget
     QMap<QString, QString> m_attr_cache;
     /* attr items's names */
     QStringList m_attr_names;
+    /* attr items's prop labels */
+    QStringList m_attr_prop_labels;
+    /* attr items's tooltips */
+    QStringList m_attr_tooltips;
 
     void init();
     void init_action();
     void init_conf();
+    void loadAttrs(bool needMoreAttrs = false);
 
     void clean();
     void refresh();

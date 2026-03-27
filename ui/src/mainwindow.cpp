@@ -556,6 +556,8 @@ void MainWindow::reminder_to_update(const latest_release_info &info)
         }
         else
         {
+            ui->statusbar->showMessage(
+                "本软件已由 azh 开源, 详见 '其他->关于本项目'", 5000);
             labelOfVersion->setText("当前版本 : <font color='green'>" +
                                     std2qstring(AZH_VERSION) +
                                     "</font> 已为最新版本");

@@ -11,19 +11,6 @@
 
 #include "tools/file_selector_dialog.h"
 
-/* list editable attributes by default */
-static QList<QPair<QString, QString>> global_default_attributes = {
-    QPair<QString, QString>("C/C++ 预处理宏定义",
-                            "ClCompile|PreprocessorDefinitions"),
-    QPair<QString, QString>("C/C++ 附加包含目录",
-                            "ClCompile|AdditionalIncludeDirectories"),
-    QPair<QString, QString>("C/C++ 其他选项", "ClCompile|AdditionalOptions"),
-    QPair<QString, QString>("C/C++ 语言标准", "ClCompile|LanguageStandard"),
-    QPair<QString, QString>("链接器 附加库目录",
-                            "Link|AdditionalLibraryDirectories"),
-    QPair<QString, QString>("链接器 附加依赖项", "Link|AdditionalDependencies"),
-    QPair<QString, QString>("链接器 其他选项", "Link|AdditionalOptions")};
-
 attribute_table_widget::attribute_table_widget(QWidget *parent)
     : QWidget(parent), ui(new Ui::attribute_table_widget),
       m_curr_view(attribute_table_view::RAW), m_name("空白属性表")
@@ -150,7 +137,7 @@ void attribute_table_widget::save_as(const QString &filePath, bool toRename)
 void attribute_table_widget::attr_item_clicked(QListWidgetItem *item)
 {
     int i = m_attr_names.indexOf(item->text());
-    QString attr = global_default_attributes[i].second;
+    QString attr = m_attr_prop_labels[i];
 
     if (i == -1)
         return;
@@ -241,7 +228,7 @@ void attribute_table_widget::single_editor_text_changed()
     emit rename(this, m_name + " [*]");
 
     int i = m_attr_names.indexOf(items.at(0)->text());
-    QString attr = global_default_attributes.at(i).second;
+    QString attr = m_attr_prop_labels[i];
 
     QString value = ui->alter_text->toPlainText();
     m_attr_cache.insert(attr, value);
@@ -266,7 +253,7 @@ void attribute_table_widget::multi_editor_text_changed()
     emit rename(this, m_name + " [*]");
 
     int i = m_attr_names.indexOf(items.at(0)->text());
-    QString attr = global_default_attributes.at(i).second;
+    QString attr = m_attr_prop_labels[i];
 
     QString value;
     if (attr != "AdditionalOptions")
@@ -332,15 +319,8 @@ void attribute_table_widget::add_path_btn_clicked()
     }
 
     /* 当前展示的属性 */
-    QStringList attr_names;
-
-    for (const auto &attr : global_default_attributes)
-    {
-        attr_names.push_back(attr.first);
-    }
-
-    int i = attr_names.indexOf(items.at(0)->text());
-    QString attr = global_default_attributes.at(i).second;
+    int i = m_attr_names.indexOf(items.at(0)->text());
+    QString attr = m_attr_prop_labels[i];
 
     if (attr == "ClCompile|AdditionalIncludeDirectories" ||
         attr == "Link|AdditionalLibraryDirectories")
@@ -405,6 +385,24 @@ void attribute_table_widget::add_path_btn_clicked()
     }
 }
 
+void attribute_table_widget::resetAttrs(bool needMoreAttrs)
+{
+    /* 读取预设属性 */
+    loadAttrs(needMoreAttrs);
+
+    /* 清理 */
+    ui->attrs->clear();
+    refresh();
+
+    /* 将默认可编辑属性加入窗口展示框中 */
+    for (int i = 0; i < m_attr_names.size(); i++)
+    {
+        QListWidgetItem *item = new QListWidgetItem(m_attr_names[i]);
+        item->setToolTip(m_attr_tooltips[i]);
+        ui->attrs->addItem(item);
+    }
+}
+
 void attribute_table_widget::init()
 {
     /* 初始化为 unload */
@@ -415,12 +413,7 @@ void attribute_table_widget::init()
     ui->original_text->setReadOnly(true);
     ui->original_muti_lines_text->setReadOnly(true);
 
-    /* 将默认可编辑属性加入窗口展示框中 */
-    for (const auto &attr : global_default_attributes)
-    {
-        m_attr_names.push_back(attr.first);
-    }
-    ui->attrs->addItems(m_attr_names);
+    resetAttrs();
 
     /* 当 QListWidget 被点击，则更新当前被点击属性的内容 */
     connect(ui->attrs, &QListWidget::itemClicked, this,
@@ -526,6 +519,44 @@ void attribute_table_widget::init_conf()
     ui->view_combo->addItems(QStringList() << "单行视图" << "多行视图");
 }
 
+void attribute_table_widget::loadAttrs(bool needMoreAttrs)
+{
+    QString attrs_filepath = ":/res/attr/default_attributes.csv";
+    if (needMoreAttrs)
+    {
+        attrs_filepath = ":/res/attr/more_attributes.csv";
+    }
+
+    QFile f(attrs_filepath);
+    f.open(QIODevice::ReadOnly);
+
+    if (!f.isOpen())
+    {
+        QMessageBox::warning(this, "初始化属性表",
+                             "读取属性失败，请联系开发者");
+        return;
+    }
+
+    QString str = f.readAll();
+    QStringList lines = str.split("\n");
+
+    m_attr_names.clear();
+    m_attr_prop_labels.clear();
+    m_attr_tooltips.clear();
+
+    for (const auto &line : lines)
+    {
+        QStringList attr_data = line.split(",");
+
+        if (attr_data.size() > 2)
+        {
+            m_attr_names.push_back(attr_data[0]);
+            m_attr_prop_labels.push_back(attr_data[1]);
+            m_attr_tooltips.push_back(attr_data[2]);
+        }
+    }
+}
+
 void attribute_table_widget::clean()
 {
     m_state = attribute_table_status::NO_EDIT;
@@ -540,11 +571,11 @@ void attribute_table_widget::refresh()
     {
         QString attr_name = items.at(0)->text();
 
-        for (auto &i : global_default_attributes)
+        for (int i = 0; i < m_attr_names.size(); i++)
         {
-            if (attr_name == i.first)
+            if (attr_name == m_attr_names[i])
             {
-                QStringList list = i.second.split("|");
+                QStringList list = m_attr_prop_labels[i].split("|");
                 if (list.count() < 2)
                     continue;
 
